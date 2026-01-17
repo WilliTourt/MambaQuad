@@ -1,10 +1,12 @@
-# CuteQuadUAV
+# MambaQuad UAV
 
 > (Developing)
 
+Mamba out!!!!
+
 ### Todos:
 - [ ] Sensors driver dev
-  - [ ] Accel & Gyro 陀螺仪
+  - [x] Accel & Gyro 陀螺仪
   - [x] Barometer 气压计
   - [x] Magnetometer 磁力计
   - [ ] ToF 近距离避障
