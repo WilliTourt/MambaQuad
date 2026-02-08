@@ -11,11 +11,11 @@ Mamba out!!!!
   - [x] Magnetometer 磁力计
   - [ ] ToF 近距离避障
   - [ ] (Optional) OpticFlow 光流
+- [x] PCB Design v1.0
 - [ ] SW Frame Modeling
-- [ ] General software
+- [ ] General software with RTOS
 - [ ] ...Physics
 - [ ] PID #1 TEST
-- [ ] RTOS Integration
 - [ ] ...
 
 ### Authors:
