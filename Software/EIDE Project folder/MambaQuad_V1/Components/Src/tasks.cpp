@@ -305,10 +305,49 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 
 
 
+/*** MagTask **********************************************************************/
+MagTask::MagTask(I2C_HandleTypeDef *hi2c,
+                 QMC5883P::QMC5883P_Mode mode, QMC5883P::QMC5883P_Spd spd,
+                 FreeRTOS::Queue<MagData_t> &queue) :
+                 Task(tskIDLE_PRIORITY + 3, 128, "Mag"),
+                 _qmc5883p(hi2c, mode, spd),
+                 _magQueue(queue) {}
+
+bool MagTask::init() {
+    auto status = _qmc5883p.begin();
+    if (status != QMC5883P::QMC5883P_Status::OK) {
+        HAL_GPIO_TogglePin(LED_ERR_GPIO_Port, LED_ERR_Pin);
+        return false;
+    }
+    return true;
+}
+
+void MagTask::taskFunction() {
+    for (;;) {
+        if (_qmc5883p.update() == QMC5883P::QMC5883P_Status::OK) {
+            _magRawData.mx = _qmc5883p.getX();
+            _magRawData.my = _qmc5883p.getY();
+            _magRawData.mz = _qmc5883p.getZ();
+            _magRawData.timestamp_ms = FreeRTOS::Kernel::getTickCount();
+            _magQueue.sendToBack(_magRawData);
+        }
+        this->delay(pdMS_TO_TICKS(3));
+    }
+}
+/*** End of MagTask ***************************************************************/
+
+
+
+
+
+
+
+
 /*** BaroTask *********************************************************************/
-BaroTask::BaroTask(I2C_HandleTypeDef *hi2c, FreeRTOS::Queue<BaroData_t> &queue) :
+BaroTask::BaroTask(I2C_HandleTypeDef *hi2c,
+                   ICP10111::ICP10111_MeasurementMode mode, FreeRTOS::Queue<BaroData_t> &queue) :
                    Task(tskIDLE_PRIORITY + 3, 128, "Baro"),
-                   _icp10111(hi2c),
+                   _icp10111(hi2c, mode),
                    _baroQueue(queue),
                    _altFilter(0.1f, 0.006f, 0.03f),
                    _pressureFilter(0.5f, 0.05f, 0.03f) {}
@@ -326,7 +365,7 @@ void BaroTask::taskFunction() {
     for (;;) {
         auto status = _icp10111.measure();
         if (status == ICP10111::ICP10111_Status::OK || status == ICP10111::ICP10111_Status::BUSY) {
-			this->delay(pdMS_TO_TICKS(1));
+			this->delayUntil(pdMS_TO_TICKS(30));
 		} else if (status == ICP10111::ICP10111_Status::DRDY) {
 			_icp10111.convertData();
 
@@ -345,7 +384,6 @@ void BaroTask::taskFunction() {
 		} else {
             HAL_GPIO_WritePin(LED_ERR_GPIO_Port, LED_ERR_Pin, GPIO_PIN_RESET);
 		}
-        this->delayUntil(pdMS_TO_TICKS(30));
     }
 }
 
@@ -378,42 +416,3 @@ void BaroTask::AlphaBetaFilter::_init(float initial_x, float initial_dx) {
     _initialized = true;
 }
 /*** End of BaroTask **************************************************************/
-
-
-
-
-
-
-
-
-/*** MagTask **********************************************************************/
-MagTask::MagTask(I2C_HandleTypeDef *hi2c,
-                 QMC5883P::QMC5883P_Mode mode, QMC5883P::QMC5883P_Spd spd,
-                 FreeRTOS::Queue<MagData_t> &queue) :
-                 Task(tskIDLE_PRIORITY + 3, 128, "Mag"),
-                 _qmc5883p(hi2c, mode, spd),
-                 _magQueue(queue) {}
-
-bool MagTask::init() {
-    auto status = _qmc5883p.begin();
-    if (status != QMC5883P::QMC5883P_Status::OK) {
-        HAL_GPIO_TogglePin(LED_ERR_GPIO_Port, LED_ERR_Pin);
-        return false;
-    }
-    return true;
-}
-
-void MagTask::taskFunction() {
-    for (;;) {
-        if (_qmc5883p.update() == QMC5883P::QMC5883P_Status::OK) {
-            _magRawData.mx = _qmc5883p.getX();
-            _magRawData.my = _qmc5883p.getY();
-            _magRawData.mz = _qmc5883p.getZ();
-            _magRawData.timestamp_ms = FreeRTOS::Kernel::getTickCount();
-            _magQueue.sendToBack(_magRawData);
-        }
-        this->delay(pdMS_TO_TICKS(3));
-    }
-}
-/*** End of MagTask ***************************************************************/
-

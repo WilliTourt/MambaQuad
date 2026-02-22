@@ -106,10 +106,7 @@ class MagTask : public FreeRTOS::Task {
     public:
         MagTask(I2C_HandleTypeDef *hi2c,
                 QMC5883P::QMC5883P_Mode mode, QMC5883P::QMC5883P_Spd spd,
-                FreeRTOS::Queue<MagData_t> &queue) :
-                Task(tskIDLE_PRIORITY + 3, 128, "Mag"),
-                _qmc5883p(hi2c, mode, spd),
-                _magQueue(queue) {}
+                FreeRTOS::Queue<MagData_t> &queue);
 
         bool init();
 
@@ -123,7 +120,8 @@ class MagTask : public FreeRTOS::Task {
 
 class BaroTask : public FreeRTOS::Task {
     public:
-        BaroTask(I2C_HandleTypeDef *hi2c, FreeRTOS::Queue<BaroData_t> &queue);
+        BaroTask(I2C_HandleTypeDef *hi2c,
+                 ICP10111::ICP10111_MeasurementMode mode, FreeRTOS::Queue<BaroData_t> &queue);
 
         bool init();
 
