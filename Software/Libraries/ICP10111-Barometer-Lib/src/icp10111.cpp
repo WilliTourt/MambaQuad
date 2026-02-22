@@ -175,7 +175,17 @@ ICP10111::ICP10111(I2C_HandleTypeDef *hi2c,
  * @return ICP10111_Status Status of initialization
  */
 ICP10111::ICP10111_Status ICP10111::begin() {
-    HAL_Delay(1);
+
+    #if ICP_USE_FREERTOS == 1
+        if (xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
+            ICP_TaskDelay(1);
+        } else {
+            HAL_Delay(1);
+        }
+    #else
+        HAL_Delay(1);
+    #endif
+
     ICP10111_Status status;
 
     status = _chkID();
@@ -204,7 +214,17 @@ ICP10111::ICP10111_Status ICP10111::reset() {
     ICP10111_Status status;
 
     status = _write(cmd, 2);
-    HAL_Delay(1);
+
+    #if ICP_USE_FREERTOS == 1
+        if (xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
+            ICP_TaskDelay(1);
+        } else {
+            HAL_Delay(1);
+        }
+    #else
+        HAL_Delay(1);
+    #endif
+
     return status;
 }
 

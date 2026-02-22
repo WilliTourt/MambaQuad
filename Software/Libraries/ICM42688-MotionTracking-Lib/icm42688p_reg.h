@@ -4,6 +4,8 @@
 #define ICM42688_I2C_ADDR_LOW     0x68  // I2C地址（AD0接地）
 #define ICM42688_I2C_ADDR_HIGH    0x69  // I2C地址（AD0接3.3V）
 
+#define ICM42688_WHO_AM_I         0x47  // 设备ID固定值
+
 // *******************************
 // (User Bank 0) 寄存器
 // *******************************

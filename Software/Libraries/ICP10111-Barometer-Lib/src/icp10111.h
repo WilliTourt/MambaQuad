@@ -34,7 +34,24 @@
 
 #pragma once
 
+
+
+#define ICP_USE_FREERTOS true // Set to 1 to enable FreeRTOS delays, 0 for HAL_Delay (blocking)
+
+
+
 #include "main.h"
+#ifdef HAL_I2C_MODULE_ENABLED
+    #include "i2c.h"
+#else
+    #error "At least one IIC port should be opened"
+#endif
+
+#if ICP_USE_FREERTOS == 1
+    #include "FreeRTOS.h"
+    #include "task.h"
+    #define ICP_TaskDelay(ms) vTaskDelay(pdMS_TO_TICKS(ms))
+#endif
 
 #if !defined(__STM32F1xx_HAL_H) && \
     !defined(__STM32F4xx_HAL_H) && \
@@ -45,10 +62,6 @@
     !defined(__STM32WBxx_HAL_H) && \
     !defined(__STM32WLxx_HAL_H)
 #error "This icp10111 library can only be used with STM32Cube HAL drivers"
-#endif
-
-#if !defined(HAL_I2C_MODULE_ENABLED)
-#error "At least one IIC port should be opened"
 #endif
 
 // ICP10111 I2C address
