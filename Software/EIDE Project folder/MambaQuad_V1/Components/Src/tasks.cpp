@@ -28,8 +28,91 @@ extern "C" {
     }
 }
 
+/*** DBGTask **********************************************************************/
+#if (USB_AS_DEBUG == 1)
+DBGTask::DBGTask(FreeRTOS::Queue<IMUData_t> &imuQueue,
+                 FreeRTOS::Queue<MagData_t> &magQueue,
+                 FreeRTOS::Queue<BaroData_t> &baroQueue) :
+                 Task(tskIDLE_PRIORITY + 1, 256, "DBG"),
+                 _imuQueue(imuQueue),
+                 _magQueue(magQueue),
+                 _baroQueue(baroQueue) {}
+#else
+DBGTask::DBGTask(UART_HandleTypeDef *huart,
+                 FreeRTOS::Queue<IMUData_t> &imuQueue,
+                 FreeRTOS::Queue<MagData_t> &magQueue,
+                 FreeRTOS::Queue<BaroData_t> &baroQueue) :
+                 Task(tskIDLE_PRIORITY + 1, 256, "DBG"),
+                 _huart(huart),
+                 _imuQueue(imuQueue),
+                 _magQueue(magQueue),
+                 _baroQueue(baroQueue) {}
+#endif
+
+void DBGTask::taskFunction() {
+    for (;;) {
+        #if (DBG_ENABLE_IMU == 1)
+            auto imuData = _imuQueue.receive(portMAX_DELAY);
+            if (imuData) {
+                sprintf((char*)_dbg_buffer, "IMU: aX=%.2f aY=%.2f aZ=%.2f gX=%.2f gY=%.2f gZ=%.2f @%lums\r\n",
+                        imuData->ax, imuData->ay, imuData->az,
+                        imuData->gx, imuData->gy, imuData->gz,
+                        imuData->timestamp_ms);
+
+                #if (USB_AS_DEBUG == 1)
+                    CDC_Transmit_FS(_dbg_buffer, strlen((char*)_dbg_buffer));
+                #else
+                    HAL_UART_Transmit(_huart, _dbg_buffer, strlen((char*)_dbg_buffer), HAL_MAX_DELAY);
+                #endif
+            }
+        #endif
+
+        #if (DBG_ENABLE_MAG == 1)
+            auto magData = _magQueue.receive(portMAX_DELAY);
+            if (magData) {
+                sprintf((char*)_dbg_buffer, "Mag: X=%.2fm Y=%.2fm Z=%.2fm @%lums\r\n",
+                        magData->mx, magData->my, magData->mz, magData->timestamp_ms);
+                
+                #if (USB_AS_DEBUG == 1)
+                    CDC_Transmit_FS(_dbg_buffer, strlen((char*)_dbg_buffer));
+                #else
+                    HAL_UART_Transmit(_huart, _dbg_buffer, strlen((char*)_dbg_buffer), HAL_MAX_DELAY);
+                #endif
+            }
+        #endif
+
+        #if (DBG_ENABLE_BARO == 1)
+            auto baroData = _baroQueue.receive(portMAX_DELAY);
+            if (baroData) {
+                sprintf((char*)_dbg_buffer, "Baro: P=%.2fPa A=%.2fm @%lums\r\n",
+                        baroData->pressure_Pa, baroData->altitude_m, baroData->timestamp_ms);
+                
+                #if (USB_AS_DEBUG == 1)
+                    CDC_Transmit_FS(_dbg_buffer, strlen((char*)_dbg_buffer));
+                #else
+                    HAL_UART_Transmit(_huart, _dbg_buffer, strlen((char*)_dbg_buffer), HAL_MAX_DELAY);
+                #endif
+            }
+        #endif
+    }
+}
+/*** End of DBGTask ***************************************************************/
+
+
+
+
+
+
+
+
 /*** IMUTask **********************************************************************/
 IMUTask* IMUTask::_instance = nullptr;
+
+IMUTask::IMUTask(SPI_HandleTypeDef *hspi, GPIO_TypeDef *cs_port,
+                 uint16_t cs_pin, FreeRTOS::Queue<IMUData_t> &queue) :
+                 Task(tskIDLE_PRIORITY + 3, 512, "IMU"),
+                 _icm42688p(hspi, cs_port, cs_pin),
+                 _imuQueue(queue) {}
 
 bool IMUTask::init() {
     auto status = _icm42688p.begin();
@@ -215,7 +298,21 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 
 /*** End of IMUTask ***************************************************************/
 
+
+
+
+
+
+
+
 /*** BaroTask *********************************************************************/
+BaroTask::BaroTask(I2C_HandleTypeDef *hi2c, FreeRTOS::Queue<BaroData_t> &queue) :
+                   Task(tskIDLE_PRIORITY + 3, 128, "Baro"),
+                   _icp10111(hi2c),
+                   _baroQueue(queue),
+                   _altFilter(0.1f, 0.006f, 0.03f),
+                   _pressureFilter(0.5f, 0.05f, 0.03f) {}
+
 bool BaroTask::init() {
     auto status = _icp10111.begin();
     if (status != ICP10111::ICP10111_Status::OK) {
@@ -282,7 +379,21 @@ void BaroTask::AlphaBetaFilter::_init(float initial_x, float initial_dx) {
 }
 /*** End of BaroTask **************************************************************/
 
+
+
+
+
+
+
+
 /*** MagTask **********************************************************************/
+MagTask::MagTask(I2C_HandleTypeDef *hi2c,
+                 QMC5883P::QMC5883P_Mode mode, QMC5883P::QMC5883P_Spd spd,
+                 FreeRTOS::Queue<MagData_t> &queue) :
+                 Task(tskIDLE_PRIORITY + 3, 128, "Mag"),
+                 _qmc5883p(hi2c, mode, spd),
+                 _magQueue(queue) {}
+
 bool MagTask::init() {
     auto status = _qmc5883p.begin();
     if (status != QMC5883P::QMC5883P_Status::OK) {
