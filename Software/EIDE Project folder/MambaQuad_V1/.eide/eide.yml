@@ -1,0 +1,270 @@
+version: "4.1"
+name: MambaQuad_V1
+type: ARM
+deviceName: null
+packDir: null
+srcDirs:
+  - Core
+  - Drivers
+  - build
+  - Components
+  - Middlewares
+  - USB_DEVICE
+virtualFolder:
+  name: <virtual_root>
+  files:
+    - path: Makefile
+    - path: MambaQuad_V1.ioc
+    - path: startup_stm32f405xx.s
+    - path: STM32F405XX_FLASH.ld
+  folders: []
+dependenceList: []
+outDir: build
+miscInfo:
+  uid: 42656cad313cd30a40005babcb0a9205
+targets:
+  Debug:
+    cppPreprocessAttrs:
+      defineList:
+        - STM32F405xx
+      incList:
+        - Core/Inc
+        - Drivers/STM32F4xx_HAL_Driver/Inc
+        - Drivers/CMSIS/Device/ST/STM32F4xx/Include
+        - Drivers/CMSIS/Include
+        - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Cpp/include
+        - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/include
+        - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM4F
+        - Components/Inc
+        - Components/ICM42688P
+        - Components/ICP10111
+        - Components/QMC5883P
+        - Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc
+        - Middlewares/ST/STM32_USB_Device_Library/Core/Inc
+        - USB_DEVICE/App
+        - USB_DEVICE/Target
+      libList: []
+    excludeList:
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/ARMClang
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/ARMv8M
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/BCC
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/CCS
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/CodeWarrior
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/Common
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/IAR
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/Keil
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/MikroC
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/MPLAB
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/MSVC-MingW
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/Paradigm
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/oWatcom
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/Renesas
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/RVDS
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/Rowley
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/SDCC
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/Softune
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/WizC
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/template
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/ThirdParty
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/Tasking
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/MemMang/heap_1.c
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/MemMang/heap_2.c
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/MemMang/heap_3.c
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/MemMang/heap_5.c
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM7_AT91FR40008
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM7_AT91SAM7S
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM7_LPC2000
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM7_LPC23xx
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_AARCH64
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_AARCH64_SRE
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CA53_64_BIT
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CA53_64_BIT_SRE
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CA9
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM0
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM23
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM23_NTZ
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM3
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM33
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM33_NTZ
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM35P
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM35P_NTZ
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM3_MPU
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM4_MPU
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM55
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM55_NTZ
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM7
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM85
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM85_NTZ
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CR5
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CRx_MPU
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CRx_No_GIC
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ATMega323
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/AVR32_UC3
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/AVR_AVRDx
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/AVR_Mega0
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ColdFire_V2
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/CORTUS_APS3
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/H8S2329
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/HCS12
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/IA32_flat
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/MCF5235
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/MicroBlaze
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/MicroBlazeV9
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/MicroBlazeV8
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/MSP430F449
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/NiosII
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/PPC405_Xilinx
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/PPC440_Xilinx
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/RISC-V
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/RL78
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/RX100
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/RX200
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/RX600
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/RX600v2
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/RX700v3_DPFPU
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/STR75x
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/TriCore_1782
+      - Middlewares/FreeRTOS-Cpp-0.5/examples
+      - Middlewares/FreeRTOS-Cpp-0.5/cmake
+      - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/examples
+      - Components/FreeRTOS-Cpp-0.5/examples
+      - Components/FreeRTOS-Cpp-0.5/cmake
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/examples
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/ARMClang
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/ARMv8M
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/BCC
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/CCS
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/CodeWarrior
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/Common
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/IAR
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/Keil
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/MikroC
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/MPLAB
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/MSVC-MingW
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/oWatcom
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/Paradigm
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/Renesas
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/Rowley
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/RVDS
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/SDCC
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/Softune
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/Tasking
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/ThirdParty
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/template
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/WizC
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/MemMang/heap_1.c
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/MemMang/heap_2.c
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/MemMang/heap_3.c
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/MemMang/heap_5.c
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM7_AT91FR40008
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM7_AT91SAM7S
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM7_LPC2000
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM7_LPC23xx
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_AARCH64
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_AARCH64_SRE
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CA53_64_BIT
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CA53_64_BIT_SRE
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CA9
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM0
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM23
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM23_NTZ
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM3
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM33
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM33_NTZ
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM35P
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM35P_NTZ
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM3_MPU
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM4_MPU
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM55
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM7
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM55_NTZ
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM85
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CR5
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM85_NTZ
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CRx_No_GIC
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CRx_MPU
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/AVR32_UC3
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ATMega323
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/AVR_AVRDx
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/AVR_Mega0
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ColdFire_V2
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/CORTUS_APS3
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/H8S2329
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/HCS12
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/IA32_flat
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/MCF5235
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/MicroBlaze
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/MicroBlazeV8
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/MicroBlazeV9
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/MSP430F449
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/NiosII
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/PPC405_Xilinx
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/PPC440_Xilinx
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/RISC-V
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/RL78
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/RX200
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/RX100
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/RX600
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/RX600v2
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/RX700v3_DPFPU
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/STR75x
+      - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/TriCore_1782
+    toolchain: GCC
+    toolchainConfigMap:
+      GCC:
+        archExtensions: ""
+        cpuType: Cortex-M4
+        floatingPointHardware: single
+        options:
+          version: 5
+          afterBuildTasks: []
+          asm-compiler: {}
+          beforeBuildTasks: []
+          c/cpp-compiler:
+            language-c: c17
+            language-cpp: c++20
+            one-elf-section-per-data: true
+            one-elf-section-per-function: true
+            optimization: level-debug
+            warnings: all-warnings
+          global:
+            $float-abi-type: hard
+            arm-thumb-mode: thumb
+            not-use-syscalls: true
+            output-debug-info: enable
+            use-newlib-nano: true
+          linker:
+            $outputTaskExcludes:
+              - .bin
+            $toolName: auto
+            LIB_FLAGS: -lm
+            output-format: elf
+            remove-unused-input-sections: true
+            use-float-printf: true
+            use-float-scanf: true
+        scatterFilePath: STM32F405XX_FLASH.ld
+        storageLayout:
+          RAM: []
+          ROM: []
+        useCustomScatterFile: true
+    uploadConfigMap:
+      JLink:
+        baseAddr: ""
+        bin: ""
+        cpuInfo:
+          cpuName: "null"
+          vendor: "null"
+        otherCmds: ""
+        proType: 1
+        speed: 8000
+      STLink:
+        address: "0x08000000"
+        bin: ""
+        elFile: None
+        optionBytes: .eide/debug.st.option.bytes.ini
+        otherCmds: ""
+        proType: SWD
+        resetMode: default
+        runAfterProgram: true
+        speed: 4000
+    uploader: STLink
