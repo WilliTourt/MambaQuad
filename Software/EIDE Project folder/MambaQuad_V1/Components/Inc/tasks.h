@@ -2,11 +2,11 @@
 
 #include <cstring>
 
-#include "main.h"
-#include "usart.h"
-#include "usbd_cdc_if.h"
 #include <FreeRTOS/Task.hpp>
 #include <FreeRTOS/Queue.hpp>
+
+#include "main.h"
+#include "ElegantDebug.h"
 
 #include "icm42688p.h"
 #include "icp10111.h"
@@ -23,7 +23,9 @@ extern "C" {
                                           uint32_t *pulTimerTaskStackSize );
 }
 
-#define USB_AS_DEBUG 1
+#ifdef USB_AS_DEBUG_PORT
+    #define USB_AS_DEBUG
+#endif
 
 #define DBG_ENABLE_IMU 0
 #define DBG_ENABLE_MAG 0
@@ -31,7 +33,7 @@ extern "C" {
 
 class DBGTask : public FreeRTOS::Task {
     public:
-    #if (USB_AS_DEBUG == 1)
+    #ifdef USB_AS_DEBUG
         DBGTask(FreeRTOS::Queue<IMUData_t> &imuQueue,
                 FreeRTOS::Queue<MagData_t> &magQueue,
                 FreeRTOS::Queue<BaroData_t> &baroQueue);
@@ -45,14 +47,11 @@ class DBGTask : public FreeRTOS::Task {
     private:
         void taskFunction() override;
 
-        #if (USB_AS_DEBUG == 0)
-            UART_HandleTypeDef *_huart;
-        #endif
-
         FreeRTOS::Queue<IMUData_t> &_imuQueue;
         FreeRTOS::Queue<MagData_t> &_magQueue;
         FreeRTOS::Queue<BaroData_t> &_baroQueue;
-        uint8_t _dbg_buffer[256];
+        
+        ElegantDebug _debug;
 };
 
 class BlinkTask : public FreeRTOS::Task {

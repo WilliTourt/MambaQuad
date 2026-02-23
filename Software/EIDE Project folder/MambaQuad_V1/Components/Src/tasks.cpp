@@ -29,24 +29,25 @@ extern "C" {
 }
 
 /*** DBGTask **********************************************************************/
-#if (USB_AS_DEBUG == 1)
+#ifdef USB_AS_DEBUG
 DBGTask::DBGTask(FreeRTOS::Queue<IMUData_t> &imuQueue,
                  FreeRTOS::Queue<MagData_t> &magQueue,
                  FreeRTOS::Queue<BaroData_t> &baroQueue) :
-                 Task(tskIDLE_PRIORITY + 1, 256, "DBG"),
+                 Task(tskIDLE_PRIORITY + 1, 512, "DBG"),
                  _imuQueue(imuQueue),
                  _magQueue(magQueue),
-                 _baroQueue(baroQueue) {}
+                 _baroQueue(baroQueue),
+                 _debug(true, true, true) {}
 #else
 DBGTask::DBGTask(UART_HandleTypeDef *huart,
                  FreeRTOS::Queue<IMUData_t> &imuQueue,
                  FreeRTOS::Queue<MagData_t> &magQueue,
                  FreeRTOS::Queue<BaroData_t> &baroQueue) :
-                 Task(tskIDLE_PRIORITY + 1, 256, "DBG"),
-                 _huart(huart),
+                 Task(tskIDLE_PRIORITY + 1, 512, "DBG"),
                  _imuQueue(imuQueue),
                  _magQueue(magQueue),
-                 _baroQueue(baroQueue) {}
+                 _baroQueue(baroQueue),
+                 _debug(huart, true, true, true) {}
 #endif
 
 void DBGTask::taskFunction() {
@@ -54,44 +55,29 @@ void DBGTask::taskFunction() {
         #if (DBG_ENABLE_IMU == 1)
             auto imuData = _imuQueue.receive(portMAX_DELAY);
             if (imuData) {
-                sprintf((char*)_dbg_buffer, "IMU: aX=%.2f aY=%.2f aZ=%.2f gX=%.2f gY=%.2f gZ=%.2f @%lums\r\n",
-                        imuData->ax, imuData->ay, imuData->az,
-                        imuData->gx, imuData->gy, imuData->gz,
-                        imuData->timestamp_ms);
-
-                #if (USB_AS_DEBUG == 1)
-                    CDC_Transmit_FS(_dbg_buffer, strlen((char*)_dbg_buffer));
-                #else
-                    HAL_UART_Transmit(_huart, _dbg_buffer, strlen((char*)_dbg_buffer), HAL_MAX_DELAY);
-                #endif
+                _debug.log("%s%sIMU:%s aX=%.2f aY=%.2f aZ=%.2f gX=%.2f gY=%.2f gZ=%.2f @%lums\r\n",
+                           BOLD, COLOR_DARK_YELLOW, CLR, 
+                           imuData->ax, imuData->ay, imuData->az,
+                           imuData->gx, imuData->gy, imuData->gz,
+                           imuData->timestamp_ms);
             }
         #endif
 
         #if (DBG_ENABLE_MAG == 1)
             auto magData = _magQueue.receive(portMAX_DELAY);
             if (magData) {
-                sprintf((char*)_dbg_buffer, "Mag: X=%.2fm Y=%.2fm Z=%.2fm @%lums\r\n",
-                        magData->mx, magData->my, magData->mz, magData->timestamp_ms);
-                
-                #if (USB_AS_DEBUG == 1)
-                    CDC_Transmit_FS(_dbg_buffer, strlen((char*)_dbg_buffer));
-                #else
-                    HAL_UART_Transmit(_huart, _dbg_buffer, strlen((char*)_dbg_buffer), HAL_MAX_DELAY);
-                #endif
+                _debug.log("%s%sMag:%s X=%.2fm Y=%.2fm Z=%.2fm @%lums\r\n",
+                           BOLD, COLOR_DARK_MAGENTA, CLR, 
+                           magData->mx, magData->my, magData->mz, magData->timestamp_ms);
             }
         #endif
 
         #if (DBG_ENABLE_BARO == 1)
             auto baroData = _baroQueue.receive(portMAX_DELAY);
             if (baroData) {
-                sprintf((char*)_dbg_buffer, "Baro: P=%.2fPa A=%.2fm @%lums\r\n",
-                        baroData->pressure_Pa, baroData->altitude_m, baroData->timestamp_ms);
-                
-                #if (USB_AS_DEBUG == 1)
-                    CDC_Transmit_FS(_dbg_buffer, strlen((char*)_dbg_buffer));
-                #else
-                    HAL_UART_Transmit(_huart, _dbg_buffer, strlen((char*)_dbg_buffer), HAL_MAX_DELAY);
-                #endif
+                _debug.log("%s%sBaro:%s P=%.2fPa A=%.2fm @%lums\r\n",
+                           BOLD, COLOR_DARK_CYAN, CLR, 
+                           baroData->pressure_Pa, baroData->altitude_m, baroData->timestamp_ms);
             }
         #endif
     }
