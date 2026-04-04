@@ -9,7 +9,8 @@ Mamba out!!!!
   - [x] Accel & Gyro 陀螺仪
   - [x] Barometer 气压计
   - [x] Magnetometer 磁力计
-  - [ ] ToF 近距离避障
+  - [x] ToF 近距离避障
+  - [x] GPS
   - [ ] (Optional) OpticFlow 光流
 - [x] PCB Design v1.0
 - [ ] SW Frame Modeling
@@ -17,6 +18,11 @@ Mamba out!!!!
 - [ ] ...Physics
 - [ ] PID #1 TEST
 - [ ] ...
+
+## Development Environment
+
+- STM32CubeMX + VSCode + EIDE
+- FreeRTOS-Cpp-0.5
 
 ### Authors:
 
