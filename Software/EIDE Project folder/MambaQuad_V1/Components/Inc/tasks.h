@@ -6,11 +6,13 @@
 #include <FreeRTOS/Queue.hpp>
 
 #include "main.h"
+#include "usart.h"
 #include "ElegantDebug.h"
 
 #include "icm42688p.h"
 #include "icp10111.h"
 #include "qmc5883p.h"
+#include "ATGM336H.h"
 #include "data_types.h"
 
 extern "C" {
@@ -30,18 +32,21 @@ extern "C" {
 #define DBG_ENABLE_IMU 0
 #define DBG_ENABLE_MAG 0
 #define DBG_ENABLE_BARO 1
+#define DBG_ENABLE_GPS 1
 
 class DBGTask : public FreeRTOS::Task {
     public:
     #ifdef USB_AS_DEBUG
         DBGTask(FreeRTOS::Queue<IMUData_t> &imuQueue,
                 FreeRTOS::Queue<MagData_t> &magQueue,
-                FreeRTOS::Queue<BaroData_t> &baroQueue);
+                FreeRTOS::Queue<BaroData_t> &baroQueue,
+                FreeRTOS::Queue<GPSData_t> &gpsQueue);
     #else
         DBGTask(UART_HandleTypeDef *huart,
                 FreeRTOS::Queue<IMUData_t> &imuQueue,
                 FreeRTOS::Queue<MagData_t> &magQueue,
-                FreeRTOS::Queue<BaroData_t> &baroQueue);
+                FreeRTOS::Queue<BaroData_t> &baroQueue,
+                FreeRTOS::Queue<GPSData_t> &gpsQueue);
     #endif
 
     private:
@@ -50,9 +55,49 @@ class DBGTask : public FreeRTOS::Task {
         FreeRTOS::Queue<IMUData_t> &_imuQueue;
         FreeRTOS::Queue<MagData_t> &_magQueue;
         FreeRTOS::Queue<BaroData_t> &_baroQueue;
+        FreeRTOS::Queue<GPSData_t> &_gpsQueue;
         
         ElegantDebug _debug;
 };
+
+// BASE CLASS OF SERIAL TASKS
+class SerialTaskBase : public FreeRTOS::Task {
+    public:
+
+        struct RxPacket {
+            uint16_t length;
+            uint8_t data[256];
+        };
+
+        SerialTaskBase(UART_HandleTypeDef *huart,
+                       FreeRTOS::Queue<RxPacket> &rxQueue,
+                       const char* taskName,
+                       UBaseType_t priority = tskIDLE_PRIORITY + 2,
+                       configSTACK_DEPTH_TYPE stackDepth = 512);
+
+        bool init();
+
+        bool send(uint8_t* data, uint16_t len);
+        // static void irqHandler(UART_HandleTypeDef *huart);
+        static void rxEventCallback(UART_HandleTypeDef *huart, uint16_t Size);
+
+    protected:
+        void taskFunction() override final;
+        virtual void rxProcess(uint8_t *data, uint16_t len) = 0;
+
+        UART_HandleTypeDef* _huart;
+        FreeRTOS::Queue<RxPacket> &_rxQueue;
+
+    private:
+        // uint8_t _rxByte;
+
+        static constexpr uint16_t RX_BUF_SIZE = 256;
+        uint8_t _rxBuffer[RX_BUF_SIZE];
+
+        static SerialTaskBase* _instances[5];
+};
+
+
 
 class BlinkTask : public FreeRTOS::Task {
     public:
@@ -69,8 +114,6 @@ class BlinkTask : public FreeRTOS::Task {
             }
         }
 };
-
-
 
 
 
@@ -157,4 +200,101 @@ class BaroTask : public FreeRTOS::Task {
 
         AlphaBetaFilter _altFilter;
         AlphaBetaFilter _pressureFilter;
+};
+
+
+
+class LoraSerialTask : public SerialTaskBase {
+    public:
+        LoraSerialTask(UART_HandleTypeDef *huart,
+                       FreeRTOS::Queue<SerialTaskBase::RxPacket> &rxQueue,
+                       FreeRTOS::Queue<LoraMessage_t> &toLoraTaskQueue,
+                       const char* taskName = "LoraSerialTask",
+                       UBaseType_t priority = tskIDLE_PRIORITY + 2,
+                       configSTACK_DEPTH_TYPE stackDepth = 512);
+        
+    private:
+        void rxProcess(uint8_t *data, uint16_t len) override;
+
+        FreeRTOS::Queue<LoraMessage_t> &_toLoraTaskQueue;
+};
+
+class LoraTask : public FreeRTOS::Task {
+    public:
+
+        enum class LoRaMode {
+            TRANSMIT,
+            AT
+        };
+
+        enum class ATcmd {
+            AT,
+            RESET,
+            DEFAULT,
+            BAUD,
+            PARI,
+            HELP,
+            LEVEL,
+            MODE,
+            SLEEP,
+            SWITCH,
+            CHANNEL,
+            MAC,
+            OPENKEY,
+            KEY,
+            PACKET,
+            DRSSI,
+            POWE,
+            LBT,
+            LRSSI,
+            ERSSI
+        };
+
+        LoraTask(FreeRTOS::Queue<LoraMessage_t> &rxQueue,
+                 LoraSerialTask &serial);
+
+        bool init();
+
+        void setMode(LoRaMode mode);
+        bool sendAT(ATcmd cmd, uint8_t *response = nullptr);
+        void sendData(const uint8_t *data, size_t len);
+
+    private:
+        void taskFunction() override;
+        const char* _getATstr(ATcmd cmd);
+
+        FreeRTOS::Queue<LoraMessage_t> &_fromLoraSerialQueue;
+        LoraSerialTask &_serial;
+
+        LoRaMode _mode;
+};
+
+class GPSSerialTask : public SerialTaskBase {
+    public:
+        GPSSerialTask(UART_HandleTypeDef *huart,
+                      FreeRTOS::Queue<SerialTaskBase::RxPacket> &rxQueue,
+                      FreeRTOS::Queue<GPSData_t> &toGPSTaskQueue,
+                      const char* taskName = "GPSSerialTask",
+                      UBaseType_t priority = tskIDLE_PRIORITY + 2,
+                      configSTACK_DEPTH_TYPE stackDepth = 1024);
+
+    private:
+        void rxProcess(uint8_t *data, uint16_t len) override;
+
+        FreeRTOS::Queue<GPSData_t> &_toGPSTaskQueue;
+        ATGM336H _gps;
+};
+
+class GPSTask : public FreeRTOS::Task {
+    public:
+        GPSTask(GPSSerialTask &serial,
+                FreeRTOS::Queue<GPSData_t> &fromGPSSerialQueue,
+                FreeRTOS::Queue<GPSData_t> &gpsQueue);
+
+    private:
+        void taskFunction() override;
+
+        GPSSerialTask &_serial;
+        FreeRTOS::Queue<GPSData_t> &_fromGPSSerialQueue;
+        FreeRTOS::Queue<GPSData_t> &_gpsQueue;
 };

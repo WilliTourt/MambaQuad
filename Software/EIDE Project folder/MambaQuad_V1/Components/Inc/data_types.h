@@ -24,3 +24,26 @@ typedef struct {
     float mz;
     uint32_t timestamp_ms;
 } MagData_t;
+
+typedef struct {
+    uint8_t data[256];
+    uint16_t length;
+    uint32_t timestamp_ms;
+} LoraMessage_t;
+
+typedef struct {
+    double lat;
+    double lon;
+    double elv;
+
+    double speed;
+    double dir;
+
+    int year, month, day;
+    int hour, min, sec;
+
+    int satInUse;
+    int satInView;
+
+    uint32_t timestamp_ms;
+} GPSData_t;

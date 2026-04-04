@@ -43,6 +43,8 @@ targets:
         - Middlewares/ST/STM32_USB_Device_Library/Core/Inc
         - USB_DEVICE/App
         - USB_DEVICE/Target
+        - Components/ATGM336H
+        - Components/ATGM336H/nmeaLib
       libList: []
     excludeList:
       - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/ARMClang
@@ -209,6 +211,8 @@ targets:
       - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/RX700v3_DPFPU
       - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/STR75x
       - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/TriCore_1782
+    settings:
+      debugger: cortex-debug
     toolchain: GCC
     toolchainConfigMap:
       GCC:
@@ -257,6 +261,11 @@ targets:
         otherCmds: ""
         proType: 1
         speed: 8000
+      OpenOCD:
+        baseAddr: "0x08000000"
+        bin: E:\Folders\Documents\Dev\STM32\VSCode\MambaQuad_V1\build\Debug\MambaQuad_V1.hex
+        interface: cmsis-dap
+        target: stm32f4x
       STLink:
         address: "0x08000000"
         bin: ""
@@ -267,4 +276,4 @@ targets:
         resetMode: default
         runAfterProgram: true
         speed: 4000
-    uploader: STLink
+    uploader: OpenOCD

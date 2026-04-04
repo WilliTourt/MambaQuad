@@ -32,21 +32,25 @@ extern "C" {
 #ifdef USB_AS_DEBUG
 DBGTask::DBGTask(FreeRTOS::Queue<IMUData_t> &imuQueue,
                  FreeRTOS::Queue<MagData_t> &magQueue,
-                 FreeRTOS::Queue<BaroData_t> &baroQueue) :
+                 FreeRTOS::Queue<BaroData_t> &baroQueue,
+                 FreeRTOS::Queue<GPSData_t> &gpsQueue) :
                  Task(tskIDLE_PRIORITY + 1, 512, "DBG"),
                  _imuQueue(imuQueue),
                  _magQueue(magQueue),
                  _baroQueue(baroQueue),
+                 _gpsQueue(gpsQueue),
                  _debug(true, true, true) {}
 #else
 DBGTask::DBGTask(UART_HandleTypeDef *huart,
                  FreeRTOS::Queue<IMUData_t> &imuQueue,
                  FreeRTOS::Queue<MagData_t> &magQueue,
-                 FreeRTOS::Queue<BaroData_t> &baroQueue) :
+                 FreeRTOS::Queue<BaroData_t> &baroQueue,
+                 FreeRTOS::Queue<GPSData_t> &gpsQueue) :
                  Task(tskIDLE_PRIORITY + 1, 512, "DBG"),
                  _imuQueue(imuQueue),
                  _magQueue(magQueue),
                  _baroQueue(baroQueue),
+                 _gpsQueue(gpsQueue),
                  _debug(huart, true, true, true) {}
 #endif
 
@@ -80,14 +84,104 @@ void DBGTask::taskFunction() {
                            baroData->pressure_Pa, baroData->altitude_m, baroData->timestamp_ms);
             }
         #endif
+
+        #if (DBG_ENABLE_GPS == 1)
+            auto gpsData = _gpsQueue.receive(portMAX_DELAY);
+            if (gpsData) {
+                _debug.log("%s%sGPS:%s Lat=%.6f Lon=%.6f Alt=%.2f SatInView=%d SatInUse=%d @%lums\r\n",
+                           BOLD, COLOR_DARK_GREEN, CLR,
+                           gpsData->lat, gpsData->lon, gpsData->elv, gpsData->satInView, gpsData->satInUse, gpsData->timestamp_ms);
+            }
+        #endif
     }
 }
 /*** End of DBGTask ***************************************************************/
 
 
+SerialTaskBase* SerialTaskBase::_instances[5] = {nullptr};
 
+SerialTaskBase::SerialTaskBase(UART_HandleTypeDef *huart,
+                               FreeRTOS::Queue<RxPacket> &rxQueue,
+                               const char* taskName,
+                               UBaseType_t priority,
+                               configSTACK_DEPTH_TYPE stackDepth) :
+    Task(priority, stackDepth, taskName),
+    _huart(huart),
+    _rxQueue(rxQueue)
+    /* ,rxByte(0) */ {
+    if (huart == &huart1) { _instances[0] = this; }
+    else if (huart == &huart2) { _instances[1] = this; }
+    else if (huart == &huart3) { _instances[2] = this; }
+    else if (huart == &huart4) { _instances[3] = this; }
+    else if (huart == &huart5) { _instances[4] = this; }
+}
 
+bool SerialTaskBase::init() {
+    // return (HAL_UART_Receive_IT(_huart, &_rxByte, 1) == HAL_OK);
+    return (HAL_UARTEx_ReceiveToIdle_DMA(_huart, _rxBuffer, RX_BUF_SIZE) == HAL_OK);
+}
 
+bool SerialTaskBase::send(uint8_t* data, uint16_t len) {
+    return (HAL_UART_Transmit(_huart, data, len, 100) == HAL_OK);
+}
+
+void SerialTaskBase::taskFunction() {
+    for (;;) {
+        auto packet = _rxQueue.receive(portMAX_DELAY);
+        if (packet) {
+            rxProcess(packet->data, packet->length);
+        }
+    }
+}
+
+// void SerialTaskBase::irqHandler(UART_HandleTypeDef *huart) {
+//     SerialTaskBase* instance = nullptr;
+//     if (huart == &huart1) { instance = _instances[0]; }
+//     else if (huart == &huart2) { instance = _instances[1]; }
+//     else if (huart == &huart3) { instance = _instances[2]; }
+//     else if (huart == &huart4) { instance = _instances[3]; }
+//     else if (huart == &huart5) { instance = _instances[4]; }
+//     else return;
+
+//     bool higherPriorityTaskWoken = pdFALSE;
+//     instance->_rxQueue.sendToBackFromISR(higherPriorityTaskWoken, instance->_rxByte);
+
+//     HAL_UART_Receive_IT(huart, &instance->_rxByte, 1);
+
+//     portYIELD_FROM_ISR(higherPriorityTaskWoken);
+// }
+
+void SerialTaskBase::rxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
+    SerialTaskBase* instance = nullptr;
+    if (huart == &huart1) instance = _instances[0];
+    else if (huart == &huart2) { instance = _instances[1]; }
+    else if (huart == &huart3) { instance = _instances[2]; }
+    else if (huart == &huart4) { instance = _instances[3]; }
+    else if (huart == &huart5) { instance = _instances[4]; }
+    else return;
+
+    if (instance) {
+        if (Size == 0) { return; }
+
+        RxPacket packet;
+        packet.length = Size;
+        memcpy(packet.data, instance->_rxBuffer, Size);
+
+        bool higherPriorityTaskWoken = pdFALSE;
+        instance->_rxQueue.sendToBackFromISR(higherPriorityTaskWoken, packet);
+
+        HAL_UARTEx_ReceiveToIdle_DMA(instance->_huart, instance->_rxBuffer, RX_BUF_SIZE);
+        portYIELD_FROM_ISR(higherPriorityTaskWoken);
+    }
+}
+
+// void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart) {
+//     SerialTaskBase::irqHandler(huart);
+// }
+
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
+    SerialTaskBase::rxEventCallback(huart, Size);
+}
 
 
 
@@ -217,7 +311,8 @@ void IMUTask::_calibrateBias(uint16_t samples) {
             abs(currData.az - prevData.az) < 0.01 &&
             abs(currData.gx - prevData.gx) < 0.1 &&
             abs(currData.gy - prevData.gy) < 0.1 &&
-            abs(currData.gz - prevData.gz) < 0.1) {
+            abs(currData.gz - prevData.gz) < 0.1 && 
+            currData.az > (g - 0.1f)) {
             isStable = true;
         }
     }
@@ -284,13 +379,6 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
 
 /*** End of IMUTask ***************************************************************/
 
-
-
-
-
-
-
-
 /*** MagTask **********************************************************************/
 MagTask::MagTask(I2C_HandleTypeDef *hi2c,
                  QMC5883P::QMC5883P_Mode mode, QMC5883P::QMC5883P_Spd spd,
@@ -321,13 +409,6 @@ void MagTask::taskFunction() {
     }
 }
 /*** End of MagTask ***************************************************************/
-
-
-
-
-
-
-
 
 /*** BaroTask *********************************************************************/
 BaroTask::BaroTask(I2C_HandleTypeDef *hi2c,
@@ -402,3 +483,167 @@ void BaroTask::AlphaBetaFilter::_init(float initial_x, float initial_dx) {
     _initialized = true;
 }
 /*** End of BaroTask **************************************************************/
+
+
+
+/*** LoRaTask *********************************************************************/
+LoraTask::LoraTask(FreeRTOS::Queue<LoraMessage_t> &fromLoraSerialQueue, LoraSerialTask &serial) :
+                   Task(tskIDLE_PRIORITY + 2, 512, "LoRa"),
+                   _fromLoraSerialQueue(fromLoraSerialQueue),
+                   _serial(serial),
+                   _mode(LoRaMode::TRANSMIT) {}
+
+const char* LoraTask::_getATstr(ATcmd cmd) {
+    switch (cmd) {
+        case ATcmd::AT:         return "AT\r\n";
+        case ATcmd::RESET:      return "AT+RESET\r\n";
+        case ATcmd::DEFAULT:    return "AT+DEFAULT\r\n";
+        case ATcmd::BAUD:       return "AT+BAUD\r\n";
+        case ATcmd::PARI:       return "AT+PARI\r\n";
+        case ATcmd::HELP:       return "AT+HELP\r\n";
+        case ATcmd::LEVEL:      return "AT+LEVEL\r\n";
+        case ATcmd::MODE:       return "AT+MODE\r\n";
+        case ATcmd::SLEEP:      return "AT+SLEEP\r\n";
+        case ATcmd::SWITCH:     return "AT+SWITCH\r\n";
+        case ATcmd::CHANNEL:    return "AT+CHANNEL\r\n";
+        case ATcmd::MAC:        return "AT+MAC\r\n";
+        case ATcmd::OPENKEY:    return "AT+OPENKEY\r\n";
+        case ATcmd::KEY:        return "AT+KEY\r\n";
+        case ATcmd::PACKET:     return "AT+PACKET\r\n";
+        case ATcmd::DRSSI:      return "AT+DRSSI\r\n";
+        case ATcmd::POWE:       return "AT+POWE\r\n";
+        case ATcmd::LBT:        return "AT+LBT\r\n";
+        case ATcmd::LRSSI:      return "AT+LRSSI\r\n";
+        case ATcmd::ERSSI:      return "AT+ERSSI\r\n";
+        default:                return "ERR";
+    }
+}
+
+bool LoraTask::init() {
+    // placeholder initialization; nothing to configure at the moment
+    // could reset queues or send an AT command to probe the module
+    _mode = LoRaMode::TRANSMIT;
+    return true;
+}
+
+void LoraTask::setMode(LoRaMode mode) {
+    const char* enterCmd = "+++\r\n";
+    _serial.send((uint8_t*)enterCmd, (uint16_t)strlen(enterCmd));
+
+    _mode = mode;
+}
+
+bool LoraTask::sendAT(ATcmd cmd, uint8_t *response) {
+    const char* at = _getATstr(cmd);
+    if (at == nullptr || strcmp(at, "ERR") == 0) {
+        return false;
+    }
+
+    _serial.send((uint8_t*)at, (uint16_t)strlen(at));
+    // response handling can be added later using `response` pointer
+    (void)response;
+    return true;
+}
+
+void LoraTask::sendData(const uint8_t *data, size_t len) {
+    // when in transmit mode send raw bytes to the radio
+    _serial.send((uint8_t*)data, (uint16_t)len);
+}
+
+void LoraTask::taskFunction() {
+    for (;;) {
+        auto opt = _fromLoraSerialQueue.receive(portMAX_DELAY);
+        if (!opt) {
+            continue;
+        }
+
+        // LoraMessage_t msg = *opt;
+
+        // msg.data contains a line-terminated sequence from the serial peripheral
+        if (_mode == LoRaMode::TRANSMIT) {
+            // when in transmit mode, received messages are packets coming in
+            // from the radio module.  dispatch them to whoever needs the data.
+            // e.g. push into another queue or invoke a callback.
+        } else {
+            // in AT mode the bytes are command responses; could be parsed
+            // by a state machine or stored in a buffer for later retrieval.
+        }
+    }
+}
+
+
+
+GPSTask::GPSTask(GPSSerialTask &serial,
+                 FreeRTOS::Queue<GPSData_t> &fromGPSSerialQueue,
+                 FreeRTOS::Queue<GPSData_t> &gpsQueue) :
+    Task(tskIDLE_PRIORITY + 2, 512, "GPS"),
+    _serial(serial),
+    _fromGPSSerialQueue(fromGPSSerialQueue),
+    _gpsQueue(gpsQueue) {}
+
+void GPSTask::taskFunction() {
+    for (;;) {
+        auto gps_data_opt = _fromGPSSerialQueue.receive(portMAX_DELAY);
+        if (gps_data_opt) {
+            GPSData_t gps_data = *gps_data_opt;
+            gps_data.lat = (gps_data.lat >= 0 ? 1 : -1) * ( (int)(fabs(gps_data.lat)) / 100 + (int)(fabs(gps_data.lat)) % 100 / 60.0f + (fabs(gps_data.lat) - (int)(fabs(gps_data.lat))) / 60.0f );
+            gps_data.lon = (gps_data.lon >= 0 ? 1 : -1) * ( (int)(fabs(gps_data.lon)) / 100 + (int)(fabs(gps_data.lon)) % 100 / 60.0f + (fabs(gps_data.lon) - (int)(fabs(gps_data.lon))) / 60.0f );
+            _gpsQueue.sendToBack(gps_data);
+        }
+    }
+}
+
+
+
+
+LoraSerialTask::LoraSerialTask(UART_HandleTypeDef *huart,
+                               FreeRTOS::Queue<SerialTaskBase::RxPacket> &rxQueue,
+                               FreeRTOS::Queue<LoraMessage_t> &toLoraTaskQueue,
+                               const char* taskName,
+                               UBaseType_t priority,
+                               configSTACK_DEPTH_TYPE stackDepth) :
+    SerialTaskBase(huart, rxQueue, taskName, priority, stackDepth),
+    _toLoraTaskQueue(toLoraTaskQueue) {}
+
+void LoraSerialTask::rxProcess(uint8_t *rxData, uint16_t len) {
+    LoraMessage_t msg;
+    msg.length = len;
+    memcpy(msg.data, rxData, len);
+    msg.timestamp_ms = FreeRTOS::Kernel::getTickCount();
+
+    _toLoraTaskQueue.sendToBack(msg);
+}
+
+GPSSerialTask::GPSSerialTask(UART_HandleTypeDef *huart,
+                             FreeRTOS::Queue<SerialTaskBase::RxPacket> &rxQueue,
+                             FreeRTOS::Queue<GPSData_t> &toGPSTaskQueue,
+                             const char* taskName,
+                             UBaseType_t priority,
+                             configSTACK_DEPTH_TYPE stackDepth) :
+    SerialTaskBase(huart, rxQueue, taskName, priority, stackDepth),
+    _toGPSTaskQueue(toGPSTaskQueue) {}
+
+void GPSSerialTask::rxProcess(uint8_t *data, uint16_t len) {
+    GPSData_t gps_data;
+
+    if (_gps.update(data)) {
+        gps_data.lat = _gps.get_lat();
+        gps_data.lon = _gps.get_lon();
+        gps_data.elv = _gps.get_elv();
+        gps_data.speed = _gps.get_speed();
+        gps_data.dir = _gps.get_direction();
+
+        gps_data.year = _gps.get_UTC_year();
+        gps_data.month = _gps.get_UTC_month();
+        gps_data.day = _gps.get_UTC_day();
+        gps_data.hour = _gps.get_UTC_hour();
+        gps_data.min = _gps.get_UTC_minute();
+        gps_data.sec = _gps.get_UTC_second();
+
+        gps_data.satInUse = _gps.get_satinfo_inuse();
+        gps_data.satInView = _gps.get_satinfo_inview();
+
+        gps_data.timestamp_ms = FreeRTOS::Kernel::getTickCount();
+        _toGPSTaskQueue.sendToBack(gps_data);
+    }
+}

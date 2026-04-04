@@ -109,8 +109,9 @@ int main(void)
   MX_USART2_UART_Init();
   MX_ADC1_Init();
   MX_USB_DEVICE_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
-  HAL_Delay(100);
+  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
 	cpp_main();
   /* USER CODE END 2 */
 
