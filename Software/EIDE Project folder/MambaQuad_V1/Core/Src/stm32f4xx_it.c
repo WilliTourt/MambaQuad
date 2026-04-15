@@ -67,7 +67,6 @@ extern DMA_HandleTypeDef hdma_tim8_ch3;
 extern DMA_HandleTypeDef hdma_tim8_ch4_trig_com;
 extern DMA_HandleTypeDef hdma_uart4_rx;
 extern DMA_HandleTypeDef hdma_uart5_rx;
-extern DMA_HandleTypeDef hdma_usart1_rx;
 extern DMA_HandleTypeDef hdma_usart2_rx;
 extern DMA_HandleTypeDef hdma_usart3_rx;
 extern TIM_HandleTypeDef htim7;
@@ -261,10 +260,25 @@ void EXTI9_5_IRQHandler(void)
 
   /* USER CODE END EXTI9_5_IRQn 0 */
   HAL_GPIO_EXTI_IRQHandler(ICM42688P_INT_Pin);
-  HAL_GPIO_EXTI_IRQHandler(LoRa_STATUS_Pin);
   /* USER CODE BEGIN EXTI9_5_IRQn 1 */
 
   /* USER CODE END EXTI9_5_IRQn 1 */
+}
+
+/**
+  * @brief This function handles EXTI line[15:10] interrupts.
+  */
+void EXTI15_10_IRQHandler(void)
+{
+  /* USER CODE BEGIN EXTI15_10_IRQn 0 */
+
+  /* USER CODE END EXTI15_10_IRQn 0 */
+  HAL_GPIO_EXTI_IRQHandler(S1_Pin);
+  HAL_GPIO_EXTI_IRQHandler(S2_Pin);
+  HAL_GPIO_EXTI_IRQHandler(LoRa_STATUS_Pin);
+  /* USER CODE BEGIN EXTI15_10_IRQn 1 */
+
+  /* USER CODE END EXTI15_10_IRQn 1 */
 }
 
 /**
@@ -335,20 +349,6 @@ void OTG_FS_IRQHandler(void)
   /* USER CODE BEGIN OTG_FS_IRQn 1 */
 
   /* USER CODE END OTG_FS_IRQn 1 */
-}
-
-/**
-  * @brief This function handles DMA2 stream5 global interrupt.
-  */
-void DMA2_Stream5_IRQHandler(void)
-{
-  /* USER CODE BEGIN DMA2_Stream5_IRQn 0 */
-
-  /* USER CODE END DMA2_Stream5_IRQn 0 */
-  HAL_DMA_IRQHandler(&hdma_usart1_rx);
-  /* USER CODE BEGIN DMA2_Stream5_IRQn 1 */
-
-  /* USER CODE END DMA2_Stream5_IRQn 1 */
 }
 
 /**

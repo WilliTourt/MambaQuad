@@ -59,8 +59,10 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define S1_Pin GPIO_PIN_13
 #define S1_GPIO_Port GPIOC
+#define S1_EXTI_IRQn EXTI15_10_IRQn
 #define S2_Pin GPIO_PIN_14
 #define S2_GPIO_Port GPIOC
+#define S2_EXTI_IRQn EXTI15_10_IRQn
 #define LED_SENS_Pin GPIO_PIN_15
 #define LED_SENS_GPIO_Port GPIOC
 #define LED_ERR_Pin GPIO_PIN_0
@@ -92,16 +94,21 @@ void Error_Handler(void);
 #define ICM42688P_INT_Pin GPIO_PIN_5
 #define ICM42688P_INT_GPIO_Port GPIOC
 #define ICM42688P_INT_EXTI_IRQn EXTI9_5_IRQn
-#define CURRENT_Pin GPIO_PIN_0
-#define CURRENT_GPIO_Port GPIOB
-#define BUZ_Pin GPIO_PIN_1
-#define BUZ_GPIO_Port GPIOB
+#define BAT_VOLT_Pin GPIO_PIN_0
+#define BAT_VOLT_GPIO_Port GPIOB
+#define ESC_CURR_Pin GPIO_PIN_1
+#define ESC_CURR_GPIO_Port GPIOB
 #define ICP_VL53_SCL_Pin GPIO_PIN_10
 #define ICP_VL53_SCL_GPIO_Port GPIOB
 #define ICP_VL53_SDA_Pin GPIO_PIN_11
 #define ICP_VL53_SDA_GPIO_Port GPIOB
 #define LED_RR_Pin GPIO_PIN_12
 #define LED_RR_GPIO_Port GPIOB
+#define BUZ_Pin GPIO_PIN_14
+#define BUZ_GPIO_Port GPIOB
+#define LoRa_STATUS_Pin GPIO_PIN_15
+#define LoRa_STATUS_GPIO_Port GPIOB
+#define LoRa_STATUS_EXTI_IRQn EXTI15_10_IRQn
 #define DShot_M1_Pin GPIO_PIN_6
 #define DShot_M1_GPIO_Port GPIOC
 #define DShot_M2_Pin GPIO_PIN_7
@@ -110,9 +117,6 @@ void Error_Handler(void);
 #define DShot_M3_GPIO_Port GPIOC
 #define DShot_M4_Pin GPIO_PIN_9
 #define DShot_M4_GPIO_Port GPIOC
-#define LoRa_STATUS_Pin GPIO_PIN_8
-#define LoRa_STATUS_GPIO_Port GPIOA
-#define LoRa_STATUS_EXTI_IRQn EXTI9_5_IRQn
 #define USB_DEBUG_DM_Pin GPIO_PIN_11
 #define USB_DEBUG_DM_GPIO_Port GPIOA
 #define USB_DEBUG_DP_Pin GPIO_PIN_12

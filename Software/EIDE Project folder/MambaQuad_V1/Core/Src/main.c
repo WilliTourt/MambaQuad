@@ -97,11 +97,9 @@ int main(void)
   MX_DMA_Init();
   MX_I2C1_Init();
   MX_SPI1_Init();
-  MX_SPI2_Init();
   MX_TIM2_Init();
   MX_UART4_Init();
   MX_UART5_Init();
-  MX_USART1_UART_Init();
   MX_USART3_UART_Init();
   MX_TIM8_Init();
   MX_I2C2_Init();
@@ -109,9 +107,9 @@ int main(void)
   MX_USART2_UART_Init();
   MX_ADC1_Init();
   MX_USB_DEVICE_Init();
-  MX_TIM3_Init();
+  MX_TIM12_Init();
+  MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
-  HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);
 	cpp_main();
   /* USER CODE END 2 */
 

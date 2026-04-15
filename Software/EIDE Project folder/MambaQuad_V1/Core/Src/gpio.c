@@ -38,6 +38,7 @@
         * Output
         * EVENT_OUT
         * EXTI
+     PB0   ------> ADCx_IN8
 */
 void MX_GPIO_Init(void)
 {
@@ -88,29 +89,31 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : LED_RR_Pin */
-  GPIO_InitStruct.Pin = LED_RR_Pin;
+  /*Configure GPIO pin : BAT_VOLT_Pin */
+  GPIO_InitStruct.Pin = BAT_VOLT_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_ANALOG;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(BAT_VOLT_GPIO_Port, &GPIO_InitStruct);
+
+  /*Configure GPIO pins : LED_RR_Pin LED_LF_Pin */
+  GPIO_InitStruct.Pin = LED_RR_Pin|LED_LF_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  HAL_GPIO_Init(LED_RR_GPIO_Port, &GPIO_InitStruct);
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
   /*Configure GPIO pin : LoRa_STATUS_Pin */
   GPIO_InitStruct.Pin = LoRa_STATUS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
-  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-  HAL_GPIO_Init(LoRa_STATUS_GPIO_Port, &GPIO_InitStruct);
-
-  /*Configure GPIO pin : LED_LF_Pin */
-  GPIO_InitStruct.Pin = LED_LF_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(LED_LF_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(LoRa_STATUS_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI9_5_IRQn, 10, 0);
   HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI15_10_IRQn, 10, 0);
+  HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 
 }
 

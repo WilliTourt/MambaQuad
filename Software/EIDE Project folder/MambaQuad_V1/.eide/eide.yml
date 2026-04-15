@@ -36,15 +36,16 @@ targets:
         - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/include
         - Components/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/GCC/ARM_CM4F
         - Components/Inc
-        - Components/ICM42688P
-        - Components/ICP10111
-        - Components/QMC5883P
+        - Components/Drivers/ICM42688P
+        - Components/Drivers/ICP10111
+        - Components/Drivers/QMC5883P
         - Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc
         - Middlewares/ST/STM32_USB_Device_Library/Core/Inc
         - USB_DEVICE/App
         - USB_DEVICE/Target
-        - Components/ATGM336H
-        - Components/ATGM336H/nmeaLib
+        - Components/Drivers/ATGM336H
+        - Components/Drivers/ATGM336H/nmeaLib
+        - Components/Tasks/Inc
       libList: []
     excludeList:
       - Middlewares/FreeRTOS-Cpp-0.5/FreeRTOS-Kernel/portable/ARMClang
@@ -276,4 +277,4 @@ targets:
         resetMode: default
         runAfterProgram: true
         speed: 4000
-    uploader: OpenOCD
+    uploader: STLink
