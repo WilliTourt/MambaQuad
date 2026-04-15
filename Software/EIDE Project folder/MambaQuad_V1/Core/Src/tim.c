@@ -24,7 +24,6 @@
 
 /* USER CODE END 0 */
 
-TIM_HandleTypeDef htim2;
 TIM_HandleTypeDef htim8;
 TIM_HandleTypeDef htim12;
 DMA_HandleTypeDef hdma_tim8_ch1;
@@ -32,46 +31,6 @@ DMA_HandleTypeDef hdma_tim8_ch2;
 DMA_HandleTypeDef hdma_tim8_ch3;
 DMA_HandleTypeDef hdma_tim8_ch4_trig_com;
 
-/* TIM2 init function */
-void MX_TIM2_Init(void)
-{
-
-  /* USER CODE BEGIN TIM2_Init 0 */
-
-  /* USER CODE END TIM2_Init 0 */
-
-  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
-  TIM_MasterConfigTypeDef sMasterConfig = {0};
-
-  /* USER CODE BEGIN TIM2_Init 1 */
-
-  /* USER CODE END TIM2_Init 1 */
-  htim2.Instance = TIM2;
-  htim2.Init.Prescaler = 0;
-  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 4294967295;
-  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
-  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
-  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
-  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
-  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
-  {
-    Error_Handler();
-  }
-  /* USER CODE BEGIN TIM2_Init 2 */
-
-  /* USER CODE END TIM2_Init 2 */
-
-}
 /* TIM8 init function */
 void MX_TIM8_Init(void)
 {
@@ -182,22 +141,6 @@ void MX_TIM12_Init(void)
 
 }
 
-void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
-{
-
-  if(tim_baseHandle->Instance==TIM2)
-  {
-  /* USER CODE BEGIN TIM2_MspInit 0 */
-
-  /* USER CODE END TIM2_MspInit 0 */
-    /* TIM2 clock enable */
-    __HAL_RCC_TIM2_CLK_ENABLE();
-  /* USER CODE BEGIN TIM2_MspInit 1 */
-
-  /* USER CODE END TIM2_MspInit 1 */
-  }
-}
-
 void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* tim_pwmHandle)
 {
 
@@ -237,11 +180,14 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* tim_pwmHandle)
     hdma_tim8_ch2.Init.Direction = DMA_MEMORY_TO_PERIPH;
     hdma_tim8_ch2.Init.PeriphInc = DMA_PINC_DISABLE;
     hdma_tim8_ch2.Init.MemInc = DMA_MINC_ENABLE;
-    hdma_tim8_ch2.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
-    hdma_tim8_ch2.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
+    hdma_tim8_ch2.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+    hdma_tim8_ch2.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
     hdma_tim8_ch2.Init.Mode = DMA_NORMAL;
     hdma_tim8_ch2.Init.Priority = DMA_PRIORITY_HIGH;
-    hdma_tim8_ch2.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+    hdma_tim8_ch2.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
+    hdma_tim8_ch2.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_1QUARTERFULL;
+    hdma_tim8_ch2.Init.MemBurst = DMA_MBURST_SINGLE;
+    hdma_tim8_ch2.Init.PeriphBurst = DMA_PBURST_SINGLE;
     if (HAL_DMA_Init(&hdma_tim8_ch2) != HAL_OK)
     {
       Error_Handler();
@@ -255,11 +201,14 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* tim_pwmHandle)
     hdma_tim8_ch3.Init.Direction = DMA_MEMORY_TO_PERIPH;
     hdma_tim8_ch3.Init.PeriphInc = DMA_PINC_DISABLE;
     hdma_tim8_ch3.Init.MemInc = DMA_MINC_ENABLE;
-    hdma_tim8_ch3.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
-    hdma_tim8_ch3.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
+    hdma_tim8_ch3.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+    hdma_tim8_ch3.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
     hdma_tim8_ch3.Init.Mode = DMA_NORMAL;
     hdma_tim8_ch3.Init.Priority = DMA_PRIORITY_HIGH;
-    hdma_tim8_ch3.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+    hdma_tim8_ch3.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
+    hdma_tim8_ch3.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_1QUARTERFULL;
+    hdma_tim8_ch3.Init.MemBurst = DMA_MBURST_SINGLE;
+    hdma_tim8_ch3.Init.PeriphBurst = DMA_PBURST_SINGLE;
     if (HAL_DMA_Init(&hdma_tim8_ch3) != HAL_OK)
     {
       Error_Handler();
@@ -273,11 +222,14 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef* tim_pwmHandle)
     hdma_tim8_ch4_trig_com.Init.Direction = DMA_MEMORY_TO_PERIPH;
     hdma_tim8_ch4_trig_com.Init.PeriphInc = DMA_PINC_DISABLE;
     hdma_tim8_ch4_trig_com.Init.MemInc = DMA_MINC_ENABLE;
-    hdma_tim8_ch4_trig_com.Init.PeriphDataAlignment = DMA_PDATAALIGN_HALFWORD;
-    hdma_tim8_ch4_trig_com.Init.MemDataAlignment = DMA_MDATAALIGN_HALFWORD;
+    hdma_tim8_ch4_trig_com.Init.PeriphDataAlignment = DMA_PDATAALIGN_WORD;
+    hdma_tim8_ch4_trig_com.Init.MemDataAlignment = DMA_MDATAALIGN_WORD;
     hdma_tim8_ch4_trig_com.Init.Mode = DMA_NORMAL;
     hdma_tim8_ch4_trig_com.Init.Priority = DMA_PRIORITY_HIGH;
-    hdma_tim8_ch4_trig_com.Init.FIFOMode = DMA_FIFOMODE_DISABLE;
+    hdma_tim8_ch4_trig_com.Init.FIFOMode = DMA_FIFOMODE_ENABLE;
+    hdma_tim8_ch4_trig_com.Init.FIFOThreshold = DMA_FIFO_THRESHOLD_1QUARTERFULL;
+    hdma_tim8_ch4_trig_com.Init.MemBurst = DMA_MBURST_SINGLE;
+    hdma_tim8_ch4_trig_com.Init.PeriphBurst = DMA_PBURST_SINGLE;
     if (HAL_DMA_Init(&hdma_tim8_ch4_trig_com) != HAL_OK)
     {
       Error_Handler();
@@ -354,22 +306,6 @@ void HAL_TIM_MspPostInit(TIM_HandleTypeDef* timHandle)
   /* USER CODE END TIM12_MspPostInit 1 */
   }
 
-}
-
-void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
-{
-
-  if(tim_baseHandle->Instance==TIM2)
-  {
-  /* USER CODE BEGIN TIM2_MspDeInit 0 */
-
-  /* USER CODE END TIM2_MspDeInit 0 */
-    /* Peripheral clock disable */
-    __HAL_RCC_TIM2_CLK_DISABLE();
-  /* USER CODE BEGIN TIM2_MspDeInit 1 */
-
-  /* USER CODE END TIM2_MspDeInit 1 */
-  }
 }
 
 void HAL_TIM_PWM_MspDeInit(TIM_HandleTypeDef* tim_pwmHandle)

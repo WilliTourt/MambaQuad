@@ -45,6 +45,10 @@ bool DShot::begin() {
 }
 
 void DShot::send(uint16_t throttle) {
+
+    if (throttle < DSHOT_MIN_THROTTLE) { throttle = DSHOT_MIN_THROTTLE; }
+    if (throttle > DSHOT_MAX_THROTTLE) { throttle = DSHOT_MAX_THROTTLE; }
+
     _prepareDMABuffer(throttle);
 
     uint32_t ccrX, ccX;

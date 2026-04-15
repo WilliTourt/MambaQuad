@@ -10,11 +10,16 @@ class BlinkTask : public FreeRTOS::Task {
     private:
         void taskFunction() override {
             for (;;) {
-                HAL_GPIO_TogglePin(LED_LF_GPIO_Port, LED_LF_Pin);
-                HAL_GPIO_TogglePin(LED_RF_GPIO_Port, LED_RF_Pin);
-                HAL_GPIO_TogglePin(LED_LR_GPIO_Port, LED_LR_Pin);
-                HAL_GPIO_TogglePin(LED_RR_GPIO_Port, LED_RR_Pin);
-                this->delayUntil(pdMS_TO_TICKS(500));
+                HAL_GPIO_WritePin(LED_LF_GPIO_Port, LED_LF_Pin, GPIO_PIN_SET);
+                HAL_GPIO_WritePin(LED_RF_GPIO_Port, LED_RF_Pin, GPIO_PIN_SET);
+                HAL_GPIO_WritePin(LED_LR_GPIO_Port, LED_LR_Pin, GPIO_PIN_SET);
+                HAL_GPIO_WritePin(LED_RR_GPIO_Port, LED_RR_Pin, GPIO_PIN_SET);
+                this->delayUntil(pdMS_TO_TICKS(100));
+                HAL_GPIO_WritePin(LED_LF_GPIO_Port, LED_LF_Pin, GPIO_PIN_RESET);
+                HAL_GPIO_WritePin(LED_RF_GPIO_Port, LED_RF_Pin, GPIO_PIN_RESET);
+                HAL_GPIO_WritePin(LED_LR_GPIO_Port, LED_LR_Pin, GPIO_PIN_RESET);
+                HAL_GPIO_WritePin(LED_RR_GPIO_Port, LED_RR_Pin, GPIO_PIN_RESET);
+                this->delayUntil(pdMS_TO_TICKS(900));
             }
         }
 };

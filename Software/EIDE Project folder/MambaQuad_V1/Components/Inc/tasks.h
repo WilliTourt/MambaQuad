@@ -10,3 +10,5 @@
 
 #include "GPSTask.h"
 #include "LoraTask.h"
+
+#include "MotorTask.h"

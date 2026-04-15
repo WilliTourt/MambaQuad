@@ -31,9 +31,16 @@ BaroTask baroTask(&hi2c2, ICP10111::ICP10111_MeasurementMode::LOW_NOISE, baroQue
 GPSSerialTask gpsSerialTask(&huart4, usart4Queue, gpsSerialQueue);
 GPSTask gpsTask(gpsSerialTask, gpsSerialQueue, gpsQueue);
 
+MotorTask motor1(&htim8, TIM_CHANNEL_1, DShot::DShotType::DSHOT600);
+
 int cpp_main() {
 
-	if (imuTask.init() && baroTask.init() && magTask.init() && gpsSerialTask.init()) {
+	if (imuTask.init() &&
+		baroTask.init() &&
+		magTask.init() &&
+		gpsSerialTask.init() &&
+		motor1.init()
+	) {
 		HAL_GPIO_WritePin(LED_SENS_GPIO_Port, LED_SENS_Pin, GPIO_PIN_RESET);
 	}
 
