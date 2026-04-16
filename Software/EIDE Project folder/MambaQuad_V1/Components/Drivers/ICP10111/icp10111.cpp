@@ -176,18 +176,9 @@ ICP10111::ICP10111(I2C_HandleTypeDef *hi2c,
  */
 ICP10111::ICP10111_Status ICP10111::begin() {
 
-    #if ICP_USE_FREERTOS == 1
-        if (xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
-            ICP_TaskDelay(1);
-        } else {
-            HAL_Delay(1);
-        }
-    #else
-        HAL_Delay(1);
-    #endif
-
+    _delay(10);
+    
     ICP10111_Status status;
-
     status = _chkID();
     if (status != ICP10111_Status::OK) {
         return status;
@@ -214,16 +205,7 @@ ICP10111::ICP10111_Status ICP10111::reset() {
     ICP10111_Status status;
 
     status = _write(cmd, 2);
-
-    #if ICP_USE_FREERTOS == 1
-        if (xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
-            ICP_TaskDelay(1);
-        } else {
-            HAL_Delay(1);
-        }
-    #else
-        HAL_Delay(1);
-    #endif
+    _delay(1);
 
     return status;
 }
@@ -583,4 +565,16 @@ ICP10111::ICP10111_Status ICP10111::_readOTP() {
     }
 
     return ICP10111_Status::OK;
+}
+
+void ICP10111::_delay(uint32_t ms) {
+    #if ICP_USE_FREERTOS == 1
+        if (xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
+            ICP_TaskDelay(ms);
+        } else {
+            HAL_Delay(ms);
+        }
+    #else
+        HAL_Delay(ms);
+    #endif
 }

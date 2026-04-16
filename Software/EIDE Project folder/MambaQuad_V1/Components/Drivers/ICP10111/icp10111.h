@@ -297,6 +297,8 @@ class ICP10111 {
          * @return ICP10111_Status Status of OTP read operation
          */
         ICP10111_Status _readOTP();
+        
+        void _delay(uint32_t ms);
 
         I2C_HandleTypeDef *_hi2c;          ///< I2C handle
         bool _i2c_dmatx_enabled = false;   ///< I2C DMA TX enabled flag

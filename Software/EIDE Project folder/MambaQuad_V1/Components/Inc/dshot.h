@@ -20,6 +20,14 @@
 #include "tim.h"
 #include <cmath>
 
+#define DSHOT_USE_FREERTOS true // Set to 1 to enable FreeRTOS delays, 0 for HAL_Delay (blocking)
+
+#if DSHOT_USE_FREERTOS == 1
+    #include "FreeRTOS.h"
+    #include "task.h"
+    #define DSHOT_TaskDelay(ms) vTaskDelay(pdMS_TO_TICKS(ms))
+#endif
+
 
 
 #define TIM_CLK_FREQ            168000000UL // 168 MHz
@@ -53,7 +61,9 @@ class DShot {
         DShot(TIM_HandleTypeDef *htim, uint32_t channel, DShotType type);
 
         bool begin();
+
         void send(uint16_t throttle);
+        void disarm();
 
     private:
 
@@ -61,6 +71,8 @@ class DShot {
 
         void _prepareDMABuffer(uint16_t value);
         uint16_t _preparePacket(uint16_t value);
+
+        void _delay(uint32_t ms);
 
         static void _dmaTC_Callback(DMA_HandleTypeDef *hdma);
 

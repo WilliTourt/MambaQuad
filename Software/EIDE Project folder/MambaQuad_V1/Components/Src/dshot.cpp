@@ -30,7 +30,7 @@ bool DShot::begin() {
     dshot_prescaler = lrintf((float) timer_clock / static_cast<uint32_t>(_type) + 0.01f) - 1;
 
     __HAL_TIM_SET_PRESCALER(_htim, dshot_prescaler);
-    __HAL_TIM_SET_AUTORELOAD(_htim, MOTOR_BITLENGTH);
+    __HAL_TIM_SET_AUTORELOAD(_htim, MOTOR_BITLENGTH - 1);
 
     uint16_t dma_id;
 
@@ -46,7 +46,6 @@ bool DShot::begin() {
 
 void DShot::send(uint16_t throttle) {
 
-    if (throttle < DSHOT_MIN_THROTTLE) { throttle = DSHOT_MIN_THROTTLE; }
     if (throttle > DSHOT_MAX_THROTTLE) { throttle = DSHOT_MAX_THROTTLE; }
 
     _prepareDMABuffer(throttle);
@@ -66,6 +65,14 @@ void DShot::send(uint16_t throttle) {
                      DMA_BUF_SIZE);
 
     __HAL_TIM_ENABLE_DMA(_htim, ccX);
+}
+
+void DShot::disarm() {
+    uint32_t start = HAL_GetTick();
+    while (HAL_GetTick() - start < 3100) {
+        send(0);
+        _delay(1);
+    }
 }
 
 uint16_t DShot::_timChannel_to_dmaID(uint32_t channel) {
@@ -112,6 +119,18 @@ void DShot::_prepareDMABuffer(uint16_t value) {
 
     _dmabuffer[16] = 0;
     _dmabuffer[17] = 0;
+}
+
+void DShot::_delay(uint32_t ms) {
+    #if DSHOT_USE_FREERTOS == 1
+        if (xTaskGetSchedulerState() == taskSCHEDULER_RUNNING) {
+            DSHOT_TaskDelay(ms);
+        } else {
+            HAL_Delay(ms);
+        }
+    #else
+        HAL_Delay(ms);
+    #endif
 }
 
 void DShot::_dmaTC_Callback(DMA_HandleTypeDef *hdma) {

@@ -32,16 +32,26 @@ GPSSerialTask gpsSerialTask(&huart4, usart4Queue, gpsSerialQueue);
 GPSTask gpsTask(gpsSerialTask, gpsSerialQueue, gpsQueue);
 
 MotorTask motor1(&htim8, TIM_CHANNEL_1, DShot::DShotType::DSHOT600);
+MotorTask motor2(&htim8, TIM_CHANNEL_2, DShot::DShotType::DSHOT600);
+MotorTask motor3(&htim8, TIM_CHANNEL_3, DShot::DShotType::DSHOT600);
+MotorTask motor4(&htim8, TIM_CHANNEL_4, DShot::DShotType::DSHOT600);
 
 int cpp_main() {
 
 	if (imuTask.init() &&
 		baroTask.init() &&
 		magTask.init() &&
-		gpsSerialTask.init() &&
-		motor1.init()
+		gpsSerialTask.init()
 	) {
-		HAL_GPIO_WritePin(LED_SENS_GPIO_Port, LED_SENS_Pin, GPIO_PIN_RESET);
+		HAL_GPIO_WritePin(LED_SENS_GPIO_Port, LED_SENS_Pin, GPIO_PIN_RESET); // turn on sensor LED
+	}
+
+	if (motor1.init() &&
+		motor2.init() &&
+		motor3.init() &&
+		motor4.init()
+	) {
+		HAL_GPIO_WritePin(LED_ERR_GPIO_Port, LED_ERR_Pin, GPIO_PIN_SET); // turn off error LED
 	}
 
 	FreeRTOS::Kernel::startScheduler();
