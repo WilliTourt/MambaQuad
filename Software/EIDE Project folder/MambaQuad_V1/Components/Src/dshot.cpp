@@ -71,8 +71,9 @@ void DShot::disarm() {
     uint32_t start = HAL_GetTick();
     while (HAL_GetTick() - start < 3100) {
         send(0);
-        _delay(1);
+        for (volatile int k = 0; k < 100; k++);
     }
+    _delay(1);
 }
 
 uint16_t DShot::_timChannel_to_dmaID(uint32_t channel) {
