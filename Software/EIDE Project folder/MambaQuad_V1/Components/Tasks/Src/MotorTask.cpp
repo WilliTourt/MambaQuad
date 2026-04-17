@@ -13,14 +13,16 @@ void MotorTask::taskFunction() {
 
     for (;;) {
         // test
-        for (int i = 0; i < 5000; i++) {
-            _dshot.send(100);
-            this->delayUntil(pdMS_TO_TICKS(1));
-        }
+        // for (int i = 900; i < 1100; i++) {
+        //     _dshot.send(i);
+        //     this->delayUntil(pdMS_TO_TICKS(1));
+        // }
 
-        for (int i = 0; i < 5000; i++) {
-            _dshot.send(400);
-            this->delayUntil(pdMS_TO_TICKS(1));
-        }
+        // for (int i = 1100; i > 900; i--) {
+        //     _dshot.send(i);
+        //     this->delayUntil(pdMS_TO_TICKS(1));
+        // }
+        _dshot.send(1900);
+        this->delayUntil(pdMS_TO_TICKS(1));
     }
 }
