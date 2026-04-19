@@ -1,0 +1,1 @@
+This folder contains all datasheets of modules/chips applied on the MambaQuadFC(V1.2) board.
