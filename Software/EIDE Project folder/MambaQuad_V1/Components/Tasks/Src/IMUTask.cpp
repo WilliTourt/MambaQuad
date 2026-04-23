@@ -122,13 +122,13 @@ void IMUTask::_calibrateBias(uint16_t samples) {
             currData.gz = _icm42688p.general.getGyroZ();
         }
 
-        if (abs(currData.ax - prevData.ax) < 0.01 &&
-            abs(currData.ay - prevData.ay) < 0.01 &&
-            abs(currData.az - prevData.az) < 0.01 &&
-            abs(currData.gx - prevData.gx) < 0.1 &&
-            abs(currData.gy - prevData.gy) < 0.1 &&
-            abs(currData.gz - prevData.gz) < 0.1 && 
-            currData.az > (GRAVITY_ACC - 0.16f)) {
+        if (abs(currData.ax - prevData.ax) < 0.02 &&
+            abs(currData.ay - prevData.ay) < 0.02 &&
+            abs(currData.az - prevData.az) < 0.02 &&
+            abs(currData.gx - prevData.gx) < 0.15 &&
+            abs(currData.gy - prevData.gy) < 0.15 &&
+            abs(currData.gz - prevData.gz) < 0.15 && 
+            currData.az > (GRAVITY_ACC - 0.12f)) {
             isStable = true;
         }
     }
