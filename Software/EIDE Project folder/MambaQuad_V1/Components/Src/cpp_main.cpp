@@ -16,20 +16,26 @@ FreeRTOS::Queue<IMUData_t> imuQueue(1);
 FreeRTOS::Queue<BaroData_t> baroQueue(1);
 FreeRTOS::Queue<MagData_t> magQueue(1);
 FreeRTOS::Queue<GPSData_t> gpsQueue(1);
+FreeRTOS::Queue<DXLR01::LoraMessage_t> loraQueue(1);
+FreeRTOS::Queue<uint8_t> generalDebugQueue(1);
 
 FreeRTOS::Queue<SerialTaskBase::RxPacket> usart2Queue(1);
 FreeRTOS::Queue<SerialTaskBase::RxPacket> usart4Queue(1);
 FreeRTOS::Queue<GPSData_t> gpsSerialQueue(1);
+FreeRTOS::Queue<DXLR01::LoraMessage_t> loraSerialQueue(1);
 
 BlinkTask blinkTask;
-DBGTask dbgTask(imuQueue, magQueue, baroQueue, gpsQueue);
+DBGTask dbgTask(imuQueue, magQueue, baroQueue, gpsQueue, generalDebugQueue);
 
 IMUTask imuTask(&hspi1, ICM42688P_CS_GPIO_Port, ICM42688P_CS_Pin, imuQueue);
 MagTask magTask(&hi2c1, QMC5883P::QMC5883P_Mode::NORMAL, QMC5883P::QMC5883P_Spd::ODR_100HZ, magQueue);
 BaroTask baroTask(&hi2c2, ICP10111::ICP10111_MeasurementMode::LOW_NOISE, baroQueue);
 
-GPSSerialTask gpsSerialTask(&huart4, usart4Queue, gpsSerialQueue);
-GPSTask gpsTask(gpsSerialTask, gpsSerialQueue, gpsQueue);
+// GPSSerialTask gpsSerialTask(&huart4, usart4Queue, gpsSerialQueue);
+// GPSTask gpsTask(gpsSerialTask, gpsSerialQueue, gpsQueue);
+
+// LoraSerialTask loraSerialTask(&huart2, usart2Queue, loraSerialQueue);
+// LoraTask loraTask(loraSerialTask, loraSerialQueue, loraQueue);
 
 MotorTask motor1(&htim8, TIM_CHANNEL_1, DShot::DShotType::DSHOT600);
 MotorTask motor2(&htim8, TIM_CHANNEL_2, DShot::DShotType::DSHOT600);
@@ -40,8 +46,8 @@ int cpp_main() {
 
 	if (imuTask.init() &&
 		baroTask.init() &&
-		magTask.init() &&
-		gpsSerialTask.init()
+		magTask.init()
+		// gpsSerialTask.init()
 	) {
 		HAL_GPIO_WritePin(LED_SENS_GPIO_Port, LED_SENS_Pin, GPIO_PIN_RESET); // turn on sensor LED
 	}

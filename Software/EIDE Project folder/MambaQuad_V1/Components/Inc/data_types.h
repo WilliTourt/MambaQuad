@@ -26,12 +26,6 @@ typedef struct {
 } MagData_t;
 
 typedef struct {
-    uint8_t data[256];
-    uint16_t length;
-    uint32_t timestamp_ms;
-} LoraMessage_t;
-
-typedef struct {
     double lat;
     double lon;
     double elv;
