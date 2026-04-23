@@ -126,7 +126,7 @@ void IMUTask::_calibrateBias(uint16_t samples) {
             abs(currData.gx - prevData.gx) < 0.1 &&
             abs(currData.gy - prevData.gy) < 0.1 &&
             abs(currData.gz - prevData.gz) < 0.1 && 
-            currData.az > (g - 0.1f)) {
+            currData.az > (g - 0.16f)) {
             isStable = true;
         }
     }

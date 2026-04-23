@@ -4,24 +4,28 @@
 DBGTask::DBGTask(FreeRTOS::Queue<IMUData_t> &imuQueue,
                  FreeRTOS::Queue<MagData_t> &magQueue,
                  FreeRTOS::Queue<BaroData_t> &baroQueue,
-                 FreeRTOS::Queue<GPSData_t> &gpsQueue) :
+                 FreeRTOS::Queue<GPSData_t> &gpsQueue,
+                 FreeRTOS::Queue<uint8_t> &generalDebugQueue) :
                  Task(tskIDLE_PRIORITY + 1, 512, "DBG"),
                  _imuQueue(imuQueue),
                  _magQueue(magQueue),
                  _baroQueue(baroQueue),
                  _gpsQueue(gpsQueue),
+                 _generalDebugQueue(generalDebugQueue),
                  _debug(true, true, true) {}
 #else
 DBGTask::DBGTask(UART_HandleTypeDef *huart,
                  FreeRTOS::Queue<IMUData_t> &imuQueue,
                  FreeRTOS::Queue<MagData_t> &magQueue,
                  FreeRTOS::Queue<BaroData_t> &baroQueue,
-                 FreeRTOS::Queue<GPSData_t> &gpsQueue) :
+                 FreeRTOS::Queue<GPSData_t> &gpsQueue,
+                 FreeRTOS::Queue<uint8_t> &generalDebugQueue) :
                  Task(tskIDLE_PRIORITY + 1, 512, "DBG"),
                  _imuQueue(imuQueue),
                  _magQueue(magQueue),
                  _baroQueue(baroQueue),
                  _gpsQueue(gpsQueue),
+                 _generalDebugQueue(generalDebugQueue),
                  _debug(huart, true, true, true) {}
 #endif
 
@@ -62,6 +66,15 @@ void DBGTask::taskFunction() {
                 _debug.log("%s%sGPS:%s Lat=%.6f Lon=%.6f Alt=%.2f SatInView=%d SatInUse=%d @%lums\r\n",
                            BOLD, COLOR_DARK_GREEN, CLR,
                            gpsData->lat, gpsData->lon, gpsData->elv, gpsData->satInView, gpsData->satInUse, gpsData->timestamp_ms);
+            }
+        #endif
+
+        #if (DBG_ENABLE_GENERAL == 1)
+            auto generalData = _generalDebugQueue.receive(portMAX_DELAY);
+            if (generalData) {
+                _debug.log("%s%sGeneral:%s %s @%lums\r\n",
+                           BOLD, COLOR_DARK_BLUE, CLR,
+                           *generalData, xTaskGetTickCount());
             }
         #endif
     }

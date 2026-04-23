@@ -13,10 +13,11 @@
     #define USB_AS_DEBUG
 #endif
 
-#define DBG_ENABLE_IMU  0
-#define DBG_ENABLE_MAG  0
-#define DBG_ENABLE_BARO 1
-#define DBG_ENABLE_GPS  1
+#define DBG_ENABLE_IMU      1
+#define DBG_ENABLE_MAG      1
+#define DBG_ENABLE_BARO     1
+#define DBG_ENABLE_GPS      0
+#define DBG_ENABLE_GENERAL  0
 
 class DBGTask : public FreeRTOS::Task {
     public:
@@ -24,13 +25,15 @@ class DBGTask : public FreeRTOS::Task {
         DBGTask(FreeRTOS::Queue<IMUData_t> &imuQueue,
                 FreeRTOS::Queue<MagData_t> &magQueue,
                 FreeRTOS::Queue<BaroData_t> &baroQueue,
-                FreeRTOS::Queue<GPSData_t> &gpsQueue);
+                FreeRTOS::Queue<GPSData_t> &gpsQueue,
+                FreeRTOS::Queue<uint8_t> &generalDebugQueue);
     #else
         DBGTask(UART_HandleTypeDef *huart,
                 FreeRTOS::Queue<IMUData_t> &imuQueue,
                 FreeRTOS::Queue<MagData_t> &magQueue,
                 FreeRTOS::Queue<BaroData_t> &baroQueue,
-                FreeRTOS::Queue<GPSData_t> &gpsQueue);
+                FreeRTOS::Queue<GPSData_t> &gpsQueue,
+                FreeRTOS::Queue<uint8_t> &generalDebugQueue);
     #endif
 
     private:
@@ -40,6 +43,7 @@ class DBGTask : public FreeRTOS::Task {
         FreeRTOS::Queue<MagData_t> &_magQueue;
         FreeRTOS::Queue<BaroData_t> &_baroQueue;
         FreeRTOS::Queue<GPSData_t> &_gpsQueue;
+        FreeRTOS::Queue<uint8_t> &_generalDebugQueue;
         
         ElegantDebug _debug;
 };
