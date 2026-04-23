@@ -1,4 +1,5 @@
 #include "IMUTask.h"
+#include "DBGTask.h"
 
 IMUTask* IMUTask::_instance = nullptr;
 
@@ -64,6 +65,7 @@ void IMUTask::taskFunction() {
     //     this->notifyGive();
     // }
 
+    DBGQ.sendToBack((uint8_t*)"IMU started to work", 0);
     for (;;) {
         // FreeRTOS::Task::notifyTake(portMAX_DELAY, true);
 
@@ -126,7 +128,7 @@ void IMUTask::_calibrateBias(uint16_t samples) {
             abs(currData.gx - prevData.gx) < 0.1 &&
             abs(currData.gy - prevData.gy) < 0.1 &&
             abs(currData.gz - prevData.gz) < 0.1 && 
-            currData.az > (g - 0.16f)) {
+            currData.az > (GRAVITY_ACC - 0.16f)) {
             isStable = true;
         }
     }

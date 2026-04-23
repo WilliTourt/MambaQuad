@@ -883,26 +883,26 @@ ICM42688P::General::StatusTypeDef ICM42688P::General::set_acc_gyro_offset(uint16
             {
                 ax_off += getAccelX();
                 ay_off += getAccelY();
-                az_off += (getAccelZ() - g);
+                az_off += (getAccelZ() - GRAVITY_ACC);
                 break;
             }
             case 1:
             {
                 ax_off += getAccelX();
                 ay_off += getAccelY();
-                az_off += (getAccelZ() + g);
+                az_off += (getAccelZ() + GRAVITY_ACC);
                 break;
             }
             case 2:
             {
-                ax_off += (getAccelX() - g);
+                ax_off += (getAccelX() - GRAVITY_ACC);
                 ay_off += getAccelY();
                 az_off += getAccelZ();
                 break;
             }
             case 3:
             {
-                ax_off += (getAccelX() + g);
+                ax_off += (getAccelX() + GRAVITY_ACC);
                 ay_off += getAccelY();
                 az_off += getAccelZ();
                 break;
@@ -910,14 +910,14 @@ ICM42688P::General::StatusTypeDef ICM42688P::General::set_acc_gyro_offset(uint16
             case 4:
             {
                 ax_off += getAccelX();
-                ay_off += (getAccelY() - g);
+                ay_off += (getAccelY() - GRAVITY_ACC);
                 az_off += getAccelZ();
                 break;
             }
             case 5:
             {
                 ax_off += getAccelX();
-                ay_off += (getAccelY() + g);
+                ay_off += (getAccelY() + GRAVITY_ACC);
                 az_off += getAccelZ();
                 break;
             }
@@ -943,9 +943,9 @@ ICM42688P::General::StatusTypeDef ICM42688P::General::set_acc_gyro_offset(uint16
             COLOR_BRIGHT_MAGENTA, UNDERLINE, gy_off / samples, COLOR_RESET, COLOR_BRIGHT_MAGENTA, UNDERLINE, gz_off / samples, COLOR_RESET);
     #endif
 
-    int16_t ax_off_real = -ax_off / g / samples / 0.0005f;
-    int16_t ay_off_real = -ay_off / g / samples / 0.0005f;
-    int16_t az_off_real = -az_off / g / samples / 0.0005f;
+    int16_t ax_off_real = -ax_off / GRAVITY_ACC / samples / 0.0005f;
+    int16_t ay_off_real = -ay_off / GRAVITY_ACC / samples / 0.0005f;
+    int16_t az_off_real = -az_off / GRAVITY_ACC / samples / 0.0005f;
     int16_t gx_off_real = -gx_off / samples / 0.03125f;
     int16_t gy_off_real = -gy_off / samples / 0.03125f;
     int16_t gz_off_real = -gz_off / samples / 0.03125f;
@@ -1026,26 +1026,26 @@ ICM42688P::General::StatusTypeDef ICM42688P::General::set_acc_gyro_offset(uint16
             {
                 ax_off += getAccelX();
                 ay_off += getAccelY();
-                az_off += (getAccelZ() - g);
+                az_off += (getAccelZ() - GRAVITY_ACC);
                 break;
             }
             case 1:
             {
                 ax_off += getAccelX();
                 ay_off += getAccelY();
-                az_off += (getAccelZ() + g);
+                az_off += (getAccelZ() + GRAVITY_ACC);
                 break;
             }
             case 2:
             {
-                ax_off += (getAccelX() - g);
+                ax_off += (getAccelX() - GRAVITY_ACC);
                 ay_off += getAccelY();
                 az_off += getAccelZ();
                 break;
             }
             case 3:
             {
-                ax_off += (getAccelX() + g);
+                ax_off += (getAccelX() + GRAVITY_ACC);
                 ay_off += getAccelY();
                 az_off += getAccelZ();
                 break;
@@ -1053,14 +1053,14 @@ ICM42688P::General::StatusTypeDef ICM42688P::General::set_acc_gyro_offset(uint16
             case 4:
             {
                 ax_off += getAccelX();
-                ay_off += (getAccelY() - g);
+                ay_off += (getAccelY() - GRAVITY_ACC);
                 az_off += getAccelZ();
                 break;
             }
             case 5:
             {
                 ax_off += getAccelX();
-                ay_off += (getAccelY() + g);
+                ay_off += (getAccelY() + GRAVITY_ACC);
                 az_off += getAccelZ();
                 break;
             }
@@ -2106,20 +2106,20 @@ ICM42688P::General::StatusTypeDef ICM42688P::General::read_data(void)
 
 float ICM42688P::General::getAccelX(void)
 {
-    _ax = (float)_ax_raw / ACCLE_FS_SENSITIVITY[_acc_fs] * g + _acc_offset_x;
+    _ax = (float)_ax_raw / ACCLE_FS_SENSITIVITY[_acc_fs] * GRAVITY_ACC + _acc_offset_x;
 
     return _ax;
 }
 
 float ICM42688P::General::getAccelY(void)
 {
-    _ay = (float)_ay_raw / ACCLE_FS_SENSITIVITY[_acc_fs] * g + _acc_offset_y;
+    _ay = (float)_ay_raw / ACCLE_FS_SENSITIVITY[_acc_fs] * GRAVITY_ACC + _acc_offset_y;
     return _ay;
 }
 
 float ICM42688P::General::getAccelZ(void)
 {
-    _az = (float)_az_raw / ACCLE_FS_SENSITIVITY[_acc_fs] * g + _acc_offset_z;
+    _az = (float)_az_raw / ACCLE_FS_SENSITIVITY[_acc_fs] * GRAVITY_ACC + _acc_offset_z;
     return _az;
 }
 

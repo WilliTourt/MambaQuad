@@ -28,7 +28,7 @@
 #endif
 
 #define PI 3.14159265
-#define g  9.80655
+#define GRAVITY_ACC  9.80655
 
 class ICM42688P
 {
