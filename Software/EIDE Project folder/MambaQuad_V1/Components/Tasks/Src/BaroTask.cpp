@@ -1,4 +1,5 @@
 #include "BaroTask.h"
+#include "DBGTask.h"
 
 BaroTask::BaroTask(I2C_HandleTypeDef *hi2c,
                    ICP10111::ICP10111_MeasurementMode mode, FreeRTOS::Queue<BaroData_t> &queue) :
@@ -18,6 +19,7 @@ bool BaroTask::init() {
 }
 
 void BaroTask::taskFunction() {
+    DBGQ.sendToBack((uint8_t*)"Barometer started to work", 0);
     for (;;) {
         auto status = _icp10111.measure();
         if (status == ICP10111::ICP10111_Status::OK || status == ICP10111::ICP10111_Status::BUSY) {

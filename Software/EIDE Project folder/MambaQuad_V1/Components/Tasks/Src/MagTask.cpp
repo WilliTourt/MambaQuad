@@ -1,4 +1,5 @@
 #include "MagTask.h"
+#include "DBGTask.h"
 
 MagTask::MagTask(I2C_HandleTypeDef *hi2c,
                  QMC5883P::QMC5883P_Mode mode, QMC5883P::QMC5883P_Spd spd,
@@ -17,6 +18,7 @@ bool MagTask::init() {
 }
 
 void MagTask::taskFunction() {
+    DBGQ.sendToBack((uint8_t*)"Magnetic sensor started to work", 0);
     for (;;) {
         if (_qmc5883p.update() == QMC5883P::QMC5883P_Status::OK) {
             _magRawData.mx = _qmc5883p.getX();

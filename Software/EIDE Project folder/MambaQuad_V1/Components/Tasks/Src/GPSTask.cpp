@@ -1,4 +1,5 @@
 #include "GPSTask.h"
+#include "DBGTask.h"
 
 GPSTask::GPSTask(GPSSerialTask &serial,
                  FreeRTOS::Queue<GPSData_t> &fromGPSSerialQueue,
@@ -9,6 +10,7 @@ GPSTask::GPSTask(GPSSerialTask &serial,
     _gpsQueue(gpsQueue) {}
 
 void GPSTask::taskFunction() {
+    DBGQ.sendToBack((uint8_t*)"GPS started to work", 0);
     for (;;) {
         auto gps_data_opt = _fromGPSSerialQueue.receive(portMAX_DELAY);
         if (gps_data_opt) {
