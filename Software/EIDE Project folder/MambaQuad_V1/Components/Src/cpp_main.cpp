@@ -49,7 +49,9 @@ int cpp_main() {
 	if (imuTask.init() &&
 		baroTask.init() &&
 		magTask.init() &&
-		gpsSerialTask.init()
+		gpsSerialTask.init() // &&
+		// loraSerialTask.init() &&
+		// loraTask.init(0x01, 2, DXLR01::TransMode::TRANSPARENT, 0x0001, 7)
 	) {
 		HAL_GPIO_WritePin(LED_SENS_GPIO_Port, LED_SENS_Pin, GPIO_PIN_RESET); // turn on sensor LED
 	}

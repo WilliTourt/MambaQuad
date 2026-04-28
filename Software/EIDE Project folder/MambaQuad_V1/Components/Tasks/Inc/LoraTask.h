@@ -42,6 +42,7 @@ class LoraTask : public FreeRTOS::Task {
             auto* task = static_cast<LoraTask*>(userData);
             return task->_serial.send(data, len);
         }
+        
         static bool loraReceiveCb(uint8_t* data, uint16_t& len, uint32_t timeout, void* userData) {
             auto* task = static_cast<LoraTask*>(userData);
             auto msg = task->_fromLoraSerialQueue.receive(pdMS_TO_TICKS(timeout));
