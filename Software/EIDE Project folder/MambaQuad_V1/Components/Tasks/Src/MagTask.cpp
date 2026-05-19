@@ -11,7 +11,7 @@ MagTask::MagTask(I2C_HandleTypeDef *hi2c,
 bool MagTask::init() {
     auto status = _qmc5883p.begin();
     if (status != QMC5883P::QMC5883P_Status::OK) {
-        HAL_GPIO_TogglePin(LED_ERR_GPIO_Port, LED_ERR_Pin);
+        HAL_GPIO_WritePin(LED_ERR_GPIO_Port, LED_ERR_Pin, GPIO_PIN_RESET); // turn on error LED
         return false;
     }
     return true;

@@ -71,7 +71,7 @@ void DShot::disarm() {
     uint32_t start = HAL_GetTick();
     while (HAL_GetTick() - start < 3100) {
         send(0);
-        for (volatile int k = 0; k < 100; k++);
+        for (uint32_t k = 0; k < 100; k++);
     }
     _delay(1);
 }

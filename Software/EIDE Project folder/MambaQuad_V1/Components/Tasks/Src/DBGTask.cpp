@@ -1,6 +1,6 @@
 #include "DBGTask.h"
 
-FreeRTOS::Queue<uint8_t*> DBGQ(3);
+FreeRTOS::Queue<uint8_t*> DBGQ(32);
 
 #ifdef USB_AS_DEBUG
 DBGTask::DBGTask(FreeRTOS::Queue<IMUData_t> &imuQueue,

@@ -1,7 +1,7 @@
 #include "SerialTaskBase.h"
 #include <cstring>
 
-SerialTaskBase* SerialTaskBase::_instances[5] = {nullptr};
+SerialTaskBase* SerialTaskBase::_instances[4] = {nullptr}; // We have USART2, USART3, UART4 and UART5 available
 
 SerialTaskBase::SerialTaskBase(UART_HandleTypeDef *huart,
                                FreeRTOS::Queue<RxPacket> &rxQueue,
@@ -12,11 +12,10 @@ SerialTaskBase::SerialTaskBase(UART_HandleTypeDef *huart,
     _huart(huart),
     _rxQueue(rxQueue)
     /* ,rxByte(0) */ {
-    if (huart == &huart1) { _instances[0] = this; }
-    else if (huart == &huart2) { _instances[1] = this; }
-    else if (huart == &huart3) { _instances[2] = this; }
-    else if (huart == &huart4) { _instances[3] = this; }
-    else if (huart == &huart5) { _instances[4] = this; }
+    if (huart == &huart2) { _instances[0] = this; }
+    else if (huart == &huart3) { _instances[1] = this; }
+    else if (huart == &huart4) { _instances[2] = this; }
+    else if (huart == &huart5) { _instances[3] = this; }
 }
 
 bool SerialTaskBase::init() {
@@ -39,11 +38,10 @@ void SerialTaskBase::taskFunction() {
 
 // void SerialTaskBase::irqHandler(UART_HandleTypeDef *huart) {
 //     SerialTaskBase* instance = nullptr;
-//     if (huart == &huart1) { instance = _instances[0]; }
-//     else if (huart == &huart2) { instance = _instances[1]; }
-//     else if (huart == &huart3) { instance = _instances[2]; }
-//     else if (huart == &huart4) { instance = _instances[3]; }
-//     else if (huart == &huart5) { instance = _instances[4]; }
+//     if (huart == &huart2) { instance = _instances[0]; }
+//     else if (huart == &huart3) { instance = _instances[1]; }
+//     else if (huart == &huart4) { instance = _instances[2]; }
+//     else if (huart == &huart5) { instance = _instances[3]; }
 //     else return;
 
 //     bool higherPriorityTaskWoken = pdFALSE;
@@ -56,11 +54,11 @@ void SerialTaskBase::taskFunction() {
 
 void SerialTaskBase::rxEventCallback(UART_HandleTypeDef *huart, uint16_t Size) {
     SerialTaskBase* instance = nullptr;
-    if (huart == &huart1) instance = _instances[0];
-    else if (huart == &huart2) { instance = _instances[1]; }
-    else if (huart == &huart3) { instance = _instances[2]; }
-    else if (huart == &huart4) { instance = _instances[3]; }
-    else if (huart == &huart5) { instance = _instances[4]; }
+
+    if (huart == &huart2) { instance = _instances[0]; }
+    else if (huart == &huart3) { instance = _instances[1]; }
+    else if (huart == &huart4) { instance = _instances[2]; }
+    else if (huart == &huart5) { instance = _instances[3]; }
     else return;
 
     if (instance) {

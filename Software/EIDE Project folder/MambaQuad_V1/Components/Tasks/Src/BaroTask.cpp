@@ -12,7 +12,7 @@ BaroTask::BaroTask(I2C_HandleTypeDef *hi2c,
 bool BaroTask::init() {
     auto status = _icp10111.begin();
     if (status != ICP10111::ICP10111_Status::OK) {
-        HAL_GPIO_TogglePin(LED_ERR_GPIO_Port, LED_ERR_Pin);
+        HAL_GPIO_WritePin(LED_ERR_GPIO_Port, LED_ERR_Pin, GPIO_PIN_RESET); // turn on error LED
         return false;
     }
     return true;

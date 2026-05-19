@@ -22,7 +22,7 @@ void MotorTask::taskFunction() {
         //     _dshot.send(i);
         //     this->delayUntil(pdMS_TO_TICKS(1));
         // }
-        _dshot.send(1900);
+        _dshot.send(200);
         this->delayUntil(pdMS_TO_TICKS(1));
     }
 }

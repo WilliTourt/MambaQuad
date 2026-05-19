@@ -44,26 +44,44 @@ MotorTask motor2(&htim8, TIM_CHANNEL_2, DShot::DShotType::DSHOT600);
 MotorTask motor3(&htim8, TIM_CHANNEL_3, DShot::DShotType::DSHOT600);
 MotorTask motor4(&htim8, TIM_CHANNEL_4, DShot::DShotType::DSHOT600);
 
+FDRTask fdr(&hspi2, FLASH_CS_GPIO_Port, FLASH_CS_Pin);
+
+void beep() {
+	HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 500);
+	HAL_Delay(150);
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
+	__HAL_TIM_SET_AUTORELOAD(&htim1, 500);
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 250);
+	HAL_Delay(150);
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
+	__HAL_TIM_SET_AUTORELOAD(&htim1, 333);
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 166);
+	HAL_Delay(150);
+	__HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
+	HAL_TIM_PWM_Stop(&htim1, TIM_CHANNEL_1);
+}
+
 int cpp_main() {
+
+	if (!fdr.init()) {
+		HAL_GPIO_WritePin(LED_ERR_GPIO_Port, LED_ERR_Pin, GPIO_PIN_RESET); // turn on error LED
+	}
 
 	if (imuTask.init() &&
 		baroTask.init() &&
 		magTask.init() &&
-		gpsSerialTask.init() // &&
-		// loraSerialTask.init() &&
-		// loraTask.init(0x01, 2, DXLR01::TransMode::TRANSPARENT, 0x0001, 7)
+		gpsSerialTask.init()
 	) {
 		HAL_GPIO_WritePin(LED_SENS_GPIO_Port, LED_SENS_Pin, GPIO_PIN_RESET); // turn on sensor LED
 	}
 
-	if (motor1.init() &&
-		motor2.init() &&
-		motor3.init() &&
-		motor4.init()
-	) {
-		HAL_GPIO_WritePin(LED_ERR_GPIO_Port, LED_ERR_Pin, GPIO_PIN_SET); // turn off error LED
-	}
-
+	motor1.init();
+	motor2.init();
+	motor3.init();
+	motor4.init();
+	
+	beep();
 	FreeRTOS::Kernel::startScheduler();
 
 	while (1);

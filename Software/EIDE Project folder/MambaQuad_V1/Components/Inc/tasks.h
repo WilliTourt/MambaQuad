@@ -11,4 +11,6 @@
 #include "GPSTask.h"
 #include "LoraTask.h"
 
+#include "FDRTask.h"
+
 #include "MotorTask.h"

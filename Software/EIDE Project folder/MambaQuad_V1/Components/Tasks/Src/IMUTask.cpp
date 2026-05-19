@@ -12,7 +12,7 @@ IMUTask::IMUTask(SPI_HandleTypeDef *hspi, GPIO_TypeDef *cs_port,
 bool IMUTask::init() {
     auto status = _icm42688p.begin();
     if (status != ICM42688P::ICM42688_StatusTypeDef::OK) {
-        HAL_GPIO_TogglePin(LED_ERR_GPIO_Port, LED_ERR_Pin);
+        HAL_GPIO_WritePin(LED_ERR_GPIO_Port, LED_ERR_Pin, GPIO_PIN_RESET); // turn on error LED
         return false;
     }
 

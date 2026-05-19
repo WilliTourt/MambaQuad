@@ -40,5 +40,5 @@ class SerialTaskBase : public FreeRTOS::Task {
         static constexpr uint16_t RX_BUF_SIZE = 256;
         uint8_t _rxBuffer[RX_BUF_SIZE];
 
-        static SerialTaskBase* _instances[5];
+        static SerialTaskBase* _instances[4];
 };

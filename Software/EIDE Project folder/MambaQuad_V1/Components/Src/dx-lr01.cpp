@@ -79,8 +79,8 @@ bool DXLR01::setMode(WorkingMode mode) {
     
     _delay(100);
 
-    const char* cmd = "+++";
-    _sendCb((uint8_t*)cmd, 3, _userData);
+    const char* cmd = "+++\r\n";
+    _sendCb((uint8_t*)cmd, 5, _userData);
 
     uint8_t response[256];
     uint16_t respLen = 0;

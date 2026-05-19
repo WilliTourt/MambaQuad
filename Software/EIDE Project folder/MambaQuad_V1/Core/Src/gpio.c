@@ -53,16 +53,16 @@ void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LED_SENS_GPIO_Port, LED_SENS_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOC, LED_SENS_Pin|LED_ERR_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, LED_ERR_Pin|VL53L8CX_LPn_Pin|LED_LR_Pin|ICM42688P_CS_Pin, GPIO_PIN_RESET);
-
-  /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(LoRa_RST_GPIO_Port, LoRa_RST_Pin, GPIO_PIN_SET);
+  HAL_GPIO_WritePin(GPIOC, VL53L8CX_LPn_Pin|LED_LR_Pin|ICM42688P_CS_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, LED_RR_Pin|LED_LF_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(FLASH_CS_GPIO_Port, FLASH_CS_Pin, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(LED_RF_GPIO_Port, LED_RF_Pin, GPIO_PIN_RESET);
@@ -73,21 +73,20 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : LED_SENS_Pin LED_ERR_Pin VL53L8CX_LPn_Pin LED_LR_Pin
+  /*Configure GPIO pins : LED_SENS_Pin VL53L8CX_LPn_Pin LED_ERR_Pin LED_LR_Pin
                            ICM42688P_CS_Pin */
-  GPIO_InitStruct.Pin = LED_SENS_Pin|LED_ERR_Pin|VL53L8CX_LPn_Pin|LED_LR_Pin
+  GPIO_InitStruct.Pin = LED_SENS_Pin|VL53L8CX_LPn_Pin|LED_ERR_Pin|LED_LR_Pin
                           |ICM42688P_CS_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : LoRa_RST_Pin LED_RF_Pin */
-  GPIO_InitStruct.Pin = LoRa_RST_Pin|LED_RF_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  /*Configure GPIO pin : LoRa_AUX_Pin */
+  GPIO_InitStruct.Pin = LoRa_AUX_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+  HAL_GPIO_Init(LoRa_AUX_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : BAT_VOLT_Pin */
   GPIO_InitStruct.Pin = BAT_VOLT_Pin;
@@ -102,11 +101,12 @@ void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : LoRa_STATUS_Pin */
-  GPIO_InitStruct.Pin = LoRa_STATUS_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  /*Configure GPIO pins : FLASH_CS_Pin LED_RF_Pin */
+  GPIO_InitStruct.Pin = FLASH_CS_Pin|LED_RF_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(LoRa_STATUS_GPIO_Port, &GPIO_InitStruct);
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
 }
 

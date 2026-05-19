@@ -8,6 +8,8 @@
 #include "SerialTaskBase.h"
 #include "dx-lr01.h"
 
+#include "DBGTask.h"
+
 #include "data_types.h"
 
 class LoraSerialTask : public SerialTaskBase {
