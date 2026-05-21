@@ -4,6 +4,8 @@
 #include <FreeRTOS/Task.hpp>
 #include "DBGTask.h"
 
+#include "cpp_main.h"
+
 class BlinkTask : public FreeRTOS::Task {
     public:
         BlinkTask() : Task(tskIDLE_PRIORITY + 2, 128, "Blink") {}

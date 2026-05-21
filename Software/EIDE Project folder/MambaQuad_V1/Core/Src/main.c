@@ -89,7 +89,7 @@ int main(void)
   SystemClock_Config();
 
   /* USER CODE BEGIN SysInit */
-  HAL_Delay(1000);
+  HAL_Delay(1);
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
@@ -108,6 +108,7 @@ int main(void)
   MX_USB_DEVICE_Init();
   MX_SPI2_Init();
   MX_TIM1_Init();
+  MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 	cpp_main();
   /* USER CODE END 2 */
@@ -183,7 +184,9 @@ void SystemClock_Config(void)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   /* USER CODE BEGIN Callback 0 */
-
+  if (htim->Instance == TIM2) {
+      dshot_send_all(); // 1ms period for each motor
+  }
   /* USER CODE END Callback 0 */
   if (htim->Instance == TIM7)
   {

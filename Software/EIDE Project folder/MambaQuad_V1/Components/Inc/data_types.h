@@ -78,3 +78,11 @@ typedef struct {
     uint8_t     flags;                   // bit0=lock state, bit1=err, bit2=sens status, bit3=RF aux, bit4-7: reserved
     uint32_t    timestamp_ms;            // 上电后的毫秒
 } __attribute__((packed)) FDRData_t;
+
+
+typedef struct {
+    uint16_t motor_throttle[4];
+    bool armed;
+
+    uint32_t timestamp_ms;
+} ControlData_t;

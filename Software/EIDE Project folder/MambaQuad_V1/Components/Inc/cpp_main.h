@@ -9,6 +9,7 @@ extern "C"
 #include "main.h"
 
 int cpp_main();
+void dshot_send_all();
 
 #ifdef __cplusplus
 }
