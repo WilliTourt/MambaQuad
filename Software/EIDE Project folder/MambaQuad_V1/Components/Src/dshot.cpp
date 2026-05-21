@@ -48,6 +48,11 @@ void DShot::send(uint16_t throttle) {
 
     if (throttle > DSHOT_MAX_THROTTLE) { throttle = DSHOT_MAX_THROTTLE; }
 
+    uint16_t dma_id = _timChannel_to_dmaID(_channel);
+    if (_htim->hdma[dma_id]->State != HAL_DMA_STATE_READY) {
+        return;
+    }
+
     _prepareDMABuffer(throttle);
 
     uint32_t ccrX, ccX;
@@ -69,9 +74,10 @@ void DShot::send(uint16_t throttle) {
 
 void DShot::disarm() {
     uint32_t start = HAL_GetTick();
-    while (HAL_GetTick() - start < 3100) {
+    while (HAL_GetTick() - start < 3200) {
         send(0);
-        for (uint32_t k = 0; k < 100; k++);
+        // for (uint32_t k = 0; k < 100; k++);
+        _delay(1);
     }
     _delay(1);
 }

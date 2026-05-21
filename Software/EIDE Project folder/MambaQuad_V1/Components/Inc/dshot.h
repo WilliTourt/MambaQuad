@@ -16,6 +16,7 @@
  * 
  */
 
+#pragma once
 
 #include "tim.h"
 #include <cmath>
