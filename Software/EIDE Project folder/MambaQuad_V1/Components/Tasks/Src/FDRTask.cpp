@@ -59,7 +59,7 @@ bool FDRTask::_eraseChip() {
 
 void FDRTask::taskFunction() {
 
-    char msg[128];
+    static char msg[128];
 
     this->delay(2000);
     snprintf(msg, sizeof(msg), "FDR Task started. Magic=%08X, Power on count=%ld",

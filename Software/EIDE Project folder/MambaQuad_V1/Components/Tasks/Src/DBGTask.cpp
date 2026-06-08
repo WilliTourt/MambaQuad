@@ -53,7 +53,7 @@ void DBGTask::taskFunction() {
 
         #if (DBG_ENABLE_IMU == 1)
             if (auto imuData = _imuQueue.receive(0)) {
-                _debug.log("%s%sIMU:%s aX=%.2f aY=%.2f aZ=%.2f gX=%.2f gY=%.2f gZ=%.2f @%lums\r\n",
+                _debug.log("%s%sIMU:%s aX=%6.2f aY=%6.2f aZ=%6.2f gX=%6.2f gY=%6.2f gZ=%6.2f @%lums\r\n",
                            BOLD, COLOR_DARK_YELLOW, CLR,
                            imuData->ax, imuData->ay, imuData->az,
                            imuData->gx, imuData->gy, imuData->gz,
@@ -64,7 +64,7 @@ void DBGTask::taskFunction() {
 
         #if (DBG_ENABLE_MAG == 1)
             if (auto magData = _magQueue.receive(0)) {
-                _debug.log("%s%sMag:%s X=%.2fm Y=%.2fm Z=%.2fm @%lums\r\n",
+                _debug.log("%s%sMag:%s X=%6.2fm Y=%6.2fm Z=%6.2fm @%lums\r\n",
                            BOLD, COLOR_DARK_MAGENTA, CLR,
                            magData->mx, magData->my, magData->mz, magData->timestamp_ms);
                 continue;
@@ -73,7 +73,7 @@ void DBGTask::taskFunction() {
 
         #if (DBG_ENABLE_BARO == 1)
             if (auto baroData = _baroQueue.receive(0)) {
-                _debug.log("%s%sBaro:%s P=%.2fPa A=%.2fm @%lums\r\n",
+                _debug.log("%s%sBaro:%s P=%8.2fPa A=%7.2fm @%lums\r\n",
                            BOLD, COLOR_DARK_CYAN, CLR,
                            baroData->pressure_Pa, baroData->altitude_m, baroData->timestamp_ms);
                 continue;

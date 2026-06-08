@@ -25,14 +25,14 @@ void ControlTask::send() {
 
 bool ControlTask::init() {
     bool ok = _m1.begin() && _m2.begin() && _m3.begin() && _m4.begin();
-    return ok;    
+    return ok;
 }
 
 void ControlTask::_arm() {
-    motor_throttle[0] = 0;
-    motor_throttle[1] = 0;
-    motor_throttle[2] = 0;
-    motor_throttle[3] = 0;
+    motor_throttle[0] = 48;
+    motor_throttle[1] = 48;
+    motor_throttle[2] = 48;
+    motor_throttle[3] = 48;
     _enableSending();
     this->delayUntil(pdMS_TO_TICKS(2000));
 
@@ -45,7 +45,7 @@ void ControlTask::_disarm() {
     motor_throttle[1] = 0;
     motor_throttle[2] = 0;
     motor_throttle[3] = 0;
-    this->delayUntil(pdMS_TO_TICKS(5000));
+    this->delayUntil(pdMS_TO_TICKS(3000));
     _disableSending();
 
     _armed = false;
@@ -67,6 +67,7 @@ void ControlTask::taskFunction() {
         if (cmd) {
             
             if (!_armed && cmd->armed) {
+                DBGQ.sendToBack((uint8_t*)"ControlTask: Received arm command.");
                 _arm();
             }
             
@@ -78,6 +79,7 @@ void ControlTask::taskFunction() {
             }
             
             if (_armed && !cmd->armed) {
+                DBGQ.sendToBack((uint8_t*)"ControlTask: Received disarm command.");
                 _disarm();
             }
         }

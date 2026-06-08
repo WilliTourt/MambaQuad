@@ -14,42 +14,55 @@ bool LoraTask::init(uint8_t channel, uint8_t level, DXLR01::TransMode mode,
     
     this->delay(pdMS_TO_TICKS(200));
 
-    _lora.begin(loraSendCb, loraReceiveCb, this);
+    // _lora.begin(loraSendCb, loraReceiveCb, this);
 
-    // 信道 0x01, 速率等级 2, 透传模式, 地址 0x0001, 波特率 7=115200: 0x01, 2, DXLR01::TransMode::TRANSPARENT, 0x0001, 7
-    bool ok = _lora.configure(channel, level, mode, address, baud);
+    // // 信道 0x01, 速率等级 2, 透传模式, 地址 0x0001, 波特率 7=115200: 0x01, 2, DXLR01::TransMode::TRANSPARENT, 0x0001, 7
+    // bool ok = _lora.configure(channel, level, mode, address, baud);
     
-    return ok;
+    return true;
 }
 
 void LoraTask::taskFunction() {
+    static uint8_t buf[256];
+    TickType_t lastBeat = 0;
     for (;;) {
-        auto opt = _fromLoraSerialQueue.receive(portMAX_DELAY);
-        if (!opt) {
-            continue;
+        auto message = _fromLoraSerialQueue.receive(pdMS_TO_TICKS(500));
+        if (message) {
+            uint16_t len = message->length;
+            if (len > 255) len = 255;
+            memcpy(buf, message->data, len);
+            buf[len] = '\0';
+            DBGQ.sendToBack(buf, portMAX_DELAY);
         }
 
-        if (_lora.getMode() == DXLR01::WorkingMode::TRANSMIT) {
-            switch (_lora.getTransMode()) {
-                case DXLR01::TransMode::TRANSPARENT:
-                    // 透传模式下收到的数据是空中传来的数据包
-                    break;
-                case DXLR01::TransMode::DIRECTIONAL:
-                    // 定点模式下收到的是：[源地址2字节][源信道1字节][数据]
-                    break;
-                case DXLR01::TransMode::BROADCAST:
-                    // 广播模式下收到的是：[源信道1字节][数据]
-                    break;
-            }
-            
-            // TODO: 在这里处理接收到的数据 fromLoraSerialQueue
-            // 可以解析后发到飞控任务队列 loraqueue
-            // 比如：解析遥控指令、遥测数据等
-            
-        } else {
-            // AT 模式下收到的是命令响应
-            // 已经在 sendAT 里处理了，这里可以存日志或做状态机
+        // TX 心跳测试：每 2 秒通过 USART2(蓝牙) 发一次
+        TickType_t now = xTaskGetTickCount();
+        if ((now - lastBeat) > pdMS_TO_TICKS(2000)) {
+            lastBeat = now;
+            _serial.send((uint8_t*)"TX-TEST ok!\r\n", 13);
         }
+        
+        // if (_lora.getMode() == DXLR01::WorkingMode::TRANSMIT) {
+        //     switch (_lora.getTransMode()) {
+        //         case DXLR01::TransMode::TRANSPARENT:
+        //             // 透传模式下收到的数据是空中传来的数据包
+        //             break;
+        //         case DXLR01::TransMode::DIRECTIONAL:
+        //             // 定点模式下收到的是：[源地址2字节][源信道1字节][数据]
+        //             break;
+        //         case DXLR01::TransMode::BROADCAST:
+        //             // 广播模式下收到的是：[源信道1字节][数据]
+        //             break;
+        //     }
+            
+        //     // TODO: 在这里处理接收到的数据 fromLoraSerialQueue
+        //     // 可以解析后发到飞控任务队列 loraqueue
+        //     // 比如：解析遥控指令、遥测数据等
+            
+        // } else {
+        //     // AT 模式下收到的是命令响应
+        //     // 已经在 sendAT 里处理了，这里可以存日志或做状态机
+        // }
     }
 }
 
