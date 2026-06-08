@@ -15,7 +15,7 @@ Mamba out!!!!
 - [x] PCB Design
 - [x] SW Frame Modeling
 - [x] General software with RTOS
-- [ ] Comm. Test
+- [x] Comm. Test
 - [ ] ...Physics & PID Tests
 - [ ] ...
 
