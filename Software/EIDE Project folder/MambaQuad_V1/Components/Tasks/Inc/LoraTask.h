@@ -32,33 +32,24 @@ class LoraTask : public FreeRTOS::Task {
 
         LoraTask(LoraSerialTask &serial,
                  FreeRTOS::Queue<DXLR01::LoraMessage_t> &fromLoraSerialQueue,
-                 FreeRTOS::Queue<DXLR01::LoraMessage_t> &LoraQueue);
+                 FreeRTOS::Queue<DXLR01::LoraMessage_t> &LoraQueue,
+                 FreeRTOS::Queue<ControlData_t> &ctrlQueue);
 
         bool init(uint8_t channel, uint8_t level, DXLR01::TransMode mode,
                   uint16_t address, uint8_t baud);
 
     private:
         void taskFunction() override;
-
-        static bool loraSendCb(uint8_t* data, uint16_t len, void* userData) {
-            auto* task = static_cast<LoraTask*>(userData);
-            return task->_serial.send(data, len);
-        }
-        
-        static bool loraReceiveCb(uint8_t* data, uint16_t& len, uint32_t timeout, void* userData) {
-            auto* task = static_cast<LoraTask*>(userData);
-            auto msg = task->_fromLoraSerialQueue.receive(pdMS_TO_TICKS(timeout));
-            if (msg) {
-                len = msg->length;
-                memcpy(data, msg->data, len);
-                return true;
-            }
-            return false;
-        }
+        void parseCommand(const char* cmd);
 
         LoraSerialTask &_serial;
         FreeRTOS::Queue<DXLR01::LoraMessage_t> &_fromLoraSerialQueue;
         FreeRTOS::Queue<DXLR01::LoraMessage_t> &_loraQueue;
+        FreeRTOS::Queue<ControlData_t> &_ctrlQueue;
+
+        // 状态
+        bool _armed = false;
+        uint16_t _motors[4] = {0, 0, 0, 0};
 
         DXLR01 _lora;
 };

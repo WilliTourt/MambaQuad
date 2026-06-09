@@ -1,18 +1,27 @@
-#include "LoraTask.h"
+﻿#include "LoraTask.h"
 #include <cstring>
+#include <cstdio>
+#include <cstdlib>
 
 LoraTask::LoraTask(LoraSerialTask &serial,
     FreeRTOS::Queue<DXLR01::LoraMessage_t> &fromLoraSerialQueue,
-    FreeRTOS::Queue<DXLR01::LoraMessage_t> &loraQueue) :
+    FreeRTOS::Queue<DXLR01::LoraMessage_t> &loraQueue,
+    FreeRTOS::Queue<ControlData_t> &ctrlQueue) :
     Task(tskIDLE_PRIORITY + 2, 512, "LoRa"),
     _serial(serial),
     _fromLoraSerialQueue(fromLoraSerialQueue),
-    _loraQueue(loraQueue) {}
+    _loraQueue(loraQueue),
+    _ctrlQueue(ctrlQueue) {}
 
 bool LoraTask::init(uint8_t channel, uint8_t level, DXLR01::TransMode mode,
                     uint16_t address, uint8_t baud) {
-    
     this->delay(pdMS_TO_TICKS(200));
+
+    // void(channel);
+    // void(level);
+    // void(mode);
+    // void(address);
+    // void(baud);
 
     // _lora.begin(loraSendCb, loraReceiveCb, this);
 
@@ -22,9 +31,93 @@ bool LoraTask::init(uint8_t channel, uint8_t level, DXLR01::TransMode mode,
     return true;
 }
 
+void LoraTask::parseCommand(const char* cmd) {
+    static char resp[256];
+    char cmdCopy[256];
+    strncpy(cmdCopy, cmd, sizeof(cmdCopy) - 1);
+    cmdCopy[sizeof(cmdCopy) - 1] = '\0';
+
+    // 拆第一个 token
+    char* tok = strtok(cmdCopy, " \r\n");
+    if (!tok) return;
+
+    // 手动转大写
+    for (char* p = tok; *p; p++) if (*p >= 'a' && *p <= 'z') *p -= 32;
+
+    if (strcmp(tok, "MOTOR") == 0 || strcmp(tok, "M") == 0) {
+        char* ns = strtok(nullptr, " \r\n");
+        char* vs = strtok(nullptr, " \r\n");
+        if (!ns || !vs) {
+            _serial.send((uint8_t*)"ERR: MOTOR <n|ALL> <0-1000>\r\n", 29);
+            return;
+        }
+        uint16_t speed = (uint16_t)strtoul(vs, nullptr, 10);
+        if (speed > 1000) speed = 1000;
+
+        if (strcmp(ns, "ALL") == 0) {
+            for (int i = 0; i < 4; i++) _motors[i] = speed;
+            snprintf(resp, sizeof(resp), "OK: MOTOR ALL=%u\r\n", speed);
+        } else {
+            int n = strtoul(ns, nullptr, 10);
+            if (n < 0 || n > 3) {
+                _serial.send((uint8_t*)"ERR: motor index 0-3\r\n", 22);
+                return;
+            }
+            _motors[n] = speed;
+            snprintf(resp, sizeof(resp), "OK: MOTOR %d=%u\r\n", n, speed);
+        }
+        _serial.send((uint8_t*)resp, strlen(resp));
+
+        // 发给 ControlTask
+        ControlData_t ctrlData;
+        for (int i = 0; i < 4; i++) ctrlData.motor_throttle[i] = _motors[i];
+        ctrlData.armed = _armed;
+        ctrlData.timestamp_ms = xTaskGetTickCount();
+        _ctrlQueue.sendToBack(ctrlData, 0);
+
+    } else if (strcmp(tok, "ARM") == 0) {
+        _armed = true;
+        _serial.send((uint8_t*)"OK: ARMED\r\n", 11);
+        // 更新 ControlTask
+        ControlData_t ctrlData;
+        for (int i = 0; i < 4; i++) ctrlData.motor_throttle[i] = _motors[i];
+        ctrlData.armed = true;
+        ctrlData.timestamp_ms = xTaskGetTickCount();
+        _ctrlQueue.sendToBack(ctrlData, 0);
+
+    } else if (strcmp(tok, "DISARM") == 0 || strcmp(tok, "D") == 0 ||
+               strcmp(tok, "STOP") == 0 || strcmp(tok, "ESTOP") == 0) {
+        _armed = false;
+        for (int i = 0; i < 4; i++) _motors[i] = 0;
+        _serial.send((uint8_t*)"OK: STOPPED\r\n", 13);
+        ControlData_t ctrlData;
+        memset(&ctrlData, 0, sizeof(ctrlData));
+        ctrlData.armed = false;
+        ctrlData.timestamp_ms = xTaskGetTickCount();
+        _ctrlQueue.sendToBack(ctrlData, 0);
+
+    } else if (strcmp(tok, "STATUS") == 0 || strcmp(tok, "S") == 0) {
+        snprintf(resp, sizeof(resp),
+            "STATUS: armed=%d M0=%u M1=%u M2=%u M3=%u\r\n",
+            _armed, _motors[0], _motors[1], _motors[2], _motors[3]);
+        _serial.send((uint8_t*)resp, strlen(resp));
+
+    } else if (strcmp(tok, "HELP") == 0 || strcmp(tok, "?") == 0) {
+        _serial.send((uint8_t*)
+            "MOTOR <n|ALL> <0-1000>  set motor speed\r\n"
+            "ARM/DISARM/STOP/ESTOP   arm/stop motors\r\n"
+            "STATUS                    show status\r\n",
+            120);
+
+    } else {
+        snprintf(resp, sizeof(resp), "ERR: unknown cmd '%s', try HELP\r\n", tok);
+        _serial.send((uint8_t*)resp, strlen(resp));
+    }
+}
+
 void LoraTask::taskFunction() {
     static uint8_t buf[256];
-    TickType_t lastBeat = 0;
+
     for (;;) {
         auto message = _fromLoraSerialQueue.receive(pdMS_TO_TICKS(500));
         if (message) {
@@ -32,37 +125,13 @@ void LoraTask::taskFunction() {
             if (len > 255) len = 255;
             memcpy(buf, message->data, len);
             buf[len] = '\0';
-            DBGQ.sendToBack(buf, portMAX_DELAY);
-        }
 
-        // TX 心跳测试：每 2 秒通过 USART2(蓝牙) 发一次
-        TickType_t now = xTaskGetTickCount();
-        if ((now - lastBeat) > pdMS_TO_TICKS(2000)) {
-            lastBeat = now;
-            _serial.send((uint8_t*)"TX-TEST ok!\r\n", 13);
+            if (len > 0) {
+                // 回显到 USB 调试口
+                DBGQ.sendToBack(buf, 0);
+                parseCommand((const char*)buf);
+            }
         }
-        
-        // if (_lora.getMode() == DXLR01::WorkingMode::TRANSMIT) {
-        //     switch (_lora.getTransMode()) {
-        //         case DXLR01::TransMode::TRANSPARENT:
-        //             // 透传模式下收到的数据是空中传来的数据包
-        //             break;
-        //         case DXLR01::TransMode::DIRECTIONAL:
-        //             // 定点模式下收到的是：[源地址2字节][源信道1字节][数据]
-        //             break;
-        //         case DXLR01::TransMode::BROADCAST:
-        //             // 广播模式下收到的是：[源信道1字节][数据]
-        //             break;
-        //     }
-            
-        //     // TODO: 在这里处理接收到的数据 fromLoraSerialQueue
-        //     // 可以解析后发到飞控任务队列 loraqueue
-        //     // 比如：解析遥控指令、遥测数据等
-            
-        // } else {
-        //     // AT 模式下收到的是命令响应
-        //     // 已经在 sendAT 里处理了，这里可以存日志或做状态机
-        // }
     }
 }
 

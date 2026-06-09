@@ -67,7 +67,8 @@ void FDRTask::taskFunction() {
     DBGQ.sendToBack((uint8_t*)msg);
 
     for (;;) {
-        this->delay(5000);
-        DBGQ.sendToBack((uint8_t*)"FDR: Idle...");
+        // this->delay(5000);
+        // DBGQ.sendToBack((uint8_t*)"FDR: Idle...");
+        this->suspend();
     }
 }

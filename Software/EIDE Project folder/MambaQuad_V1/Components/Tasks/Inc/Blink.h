@@ -13,7 +13,7 @@ class BlinkTask : public FreeRTOS::Task {
     private:
         void taskFunction() override {
             for (;;) {
-                DBGQ.sendToBack((uint8_t*)"Blinkyy~", 0);
+                // DBGQ.sendToBack((uint8_t*)"Blinkyy~", 0);
                 HAL_GPIO_WritePin(LED_LF_GPIO_Port, LED_LF_Pin, GPIO_PIN_SET);
                 HAL_GPIO_WritePin(LED_RF_GPIO_Port, LED_RF_Pin, GPIO_PIN_SET);
                 HAL_GPIO_WritePin(LED_LR_GPIO_Port, LED_LR_Pin, GPIO_PIN_SET);
