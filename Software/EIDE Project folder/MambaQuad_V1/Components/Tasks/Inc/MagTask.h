@@ -7,6 +7,14 @@
 #include "qmc5883p.h"
 #include "data_types.h"
 
+// // 蓝牙 MAGCAL 命令可读取的全局校准结果
+// struct MagCalResult {
+//     float offset_x, offset_y, offset_z;
+//     float scale_x, scale_y, scale_z;
+//     bool valid;
+// };
+// extern MagCalResult g_magCal;
+
 class MagTask : public FreeRTOS::Task {
     public:
         MagTask(I2C_HandleTypeDef *hi2c,

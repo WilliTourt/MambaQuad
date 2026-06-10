@@ -59,12 +59,12 @@
 /* QMC5833P User Configuration ******************************************/
 
 // Magnetic calibration parameters (Modify to match your calibration results)
-#define MAG_X_OFFSET            0.167200f
-#define MAG_Y_OFFSET            -0.906200f
-#define MAG_Z_OFFSET            -0.713000f
-#define MAG_X_SCALE             2.052229f
-#define MAG_Y_SCALE             0.711101f
-#define MAG_Z_SCALE             0.903787f
+#define MAG_X_OFFSET            0.049500f
+#define MAG_Y_OFFSET            0.016467f
+#define MAG_Z_OFFSET            -0.104267f
+#define MAG_X_SCALE             1.000000f
+#define MAG_Y_SCALE             1.024520f
+#define MAG_Z_SCALE             1.063367f
 
 // QMC5883P I2C address
 #define QMC5883P_ADDR 0x2C  // 0010 1100
@@ -234,7 +234,18 @@ class QMC5883P {
          */
         inline float getZ() { return _mag_z; }
         
-        void calibration(bool trigger);
+        /**
+         * @brief 磁力计自动校准
+         * @param timeoutSeg 采样时长（秒），默认 30 秒
+         */
+        void calibration(uint16_t timeoutSeg = 30);
+
+        inline float getOffsetX() { return _offset_x; }
+        inline float getOffsetY() { return _offset_y; }
+        inline float getOffsetZ() { return _offset_z; }
+        inline float getScaleX()  { return _scale_x; }
+        inline float getScaleY()  { return _scale_y; }
+        inline float getScaleZ()  { return _scale_z; }
 
     private:
         /**

@@ -13,6 +13,16 @@ typedef struct {
 } IMUData_t;
 
 typedef struct {
+    float roll;          // rad
+    float pitch;         // rad
+    float yaw;           // rad
+    float roll_rate;     // rad/s
+    float pitch_rate;    // rad/s
+    float yaw_rate;      // rad/s
+    uint32_t timestamp_ms;
+} AttitudeData_t;
+
+typedef struct {
     float pressure_Pa;
     float altitude_m;
     uint32_t timestamp_ms;

@@ -8,7 +8,7 @@ static ControlTask *instance = nullptr;
 ControlTask::ControlTask(DShot &m1, DShot &m2, DShot &m3, DShot &m4,
                          FreeRTOS::Queue<ControlData_t> *queue) :
     Task(tskIDLE_PRIORITY + 4, 256, "CTRL"),
-    _m1(m1), _m2(m2), _m3(m3), _m4(m4), _queue(queue) {
+    _m1(m1), _m2(m2), _m3(m3), _m4(m4), _pid(0,0,0), _queue(queue) {
     instance = this;
 }
 
@@ -34,10 +34,10 @@ void ControlTask::_arm() {
     motor_throttle[2] = 48;
     motor_throttle[3] = 48;
     _enableSending();
-    this->delayUntil(pdMS_TO_TICKS(2000));
+    this->delay(pdMS_TO_TICKS(2200));
 
     _armed = true;
-    DBGQ.sendToBack((uint8_t*)"Motors armed.");
+    DBGQ.sendToBack((uint8_t*)"ControlTask: Motors armed.");
 }
 
 void ControlTask::_disarm() {
@@ -45,11 +45,11 @@ void ControlTask::_disarm() {
     motor_throttle[1] = 0;
     motor_throttle[2] = 0;
     motor_throttle[3] = 0;
-    this->delayUntil(pdMS_TO_TICKS(3000));
+    this->delay(pdMS_TO_TICKS(3000));
     _disableSending();
 
     _armed = false;
-    DBGQ.sendToBack((uint8_t*)"Motors disarmed.");
+    DBGQ.sendToBack((uint8_t*)"ControlTask: Motors disarmed.");
 }
 
 void ControlTask::_enableSending() {

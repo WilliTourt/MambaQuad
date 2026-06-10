@@ -14,3 +14,4 @@
 #include "FDRTask.h"
 
 #include "ControlTask.h"
+#include "AttitudeTask.h"

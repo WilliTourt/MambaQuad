@@ -208,49 +208,53 @@ QMC5883P::QMC5883P_Status QMC5883P::update() {
     return QMC5883P_Status::OK;
 }
 
-void QMC5883P::calibration(bool trigger) {
-    _offset_x = 0;
-    _offset_y = 0;
-    _offset_z = 0;
-    _scale_x = 1;
-    _scale_y = 1;
-    _scale_z = 1;
-
-    float max[3] = {0};
-    float min[3] = {0};
+void QMC5883P::calibration(uint16_t timeoutSeg) {
     
-    float mag_offset[3] = {0};
-    float mag_scale[3] = {0};
-    float avg_delta = 0;
+    float max[3] = {-9999.0f, -9999.0f, -9999.0f};
+    float min[3] = {9999.0f, 9999.0f, 9999.0f};
     
-    while (trigger == true) {
-        update();
+    uint32_t startTime = getTick();
+    uint32_t sampleCount = 0;
     
-        if(getX() >= max[0]) max[0] = getX();
-        else if(getX() <= min[0]) min[0] = getX();
-        
-        if(getY() >= max[1]) max[1] = getY();
-        else if(getY() <= min[1]) min[1] = getY();
-        
-        if(getZ() >= max[2]) max[2] = getZ();
-        else if(getZ() <= min[2]) min[2] = getZ();
-        
-        for(int i = 0; i < 3; i++)
-        {
-            mag_offset[i] = (max[i] + min[i]) / 2;
-            mag_scale[i] = (max[i] - min[i]) / 2;
+    // 临时禁用校准，用原始 Gauss 值采集
+    _offset_x = _offset_y = _offset_z = 0;
+    _scale_x = _scale_y = _scale_z = 1;
+    
+    while (getTick() - startTime < timeoutSeg * 1000u) {
+        if (update() != QMC5883P_Status::OK) {
+            Delay(20);
+            continue;
         }
-        avg_delta = (mag_scale[0] + mag_scale[1] + mag_scale[2]) / 3;
-        for(int i = 0; i < 3; i++)
-        {
-            mag_scale[i] = avg_delta / mag_scale[i];
-        }
-    }    
+        
+        sampleCount++;
+        
+        // _mag_x 已经是 Gauss（offset=0, scale=1）
+        if (_mag_x > max[0]) max[0] = _mag_x;
+        if (_mag_y > max[1]) max[1] = _mag_y;
+        if (_mag_z > max[2]) max[2] = _mag_z;
+        if (_mag_x < min[0]) min[0] = _mag_x;
+        if (_mag_y < min[1]) min[1] = _mag_y;
+        if (_mag_z < min[2]) min[2] = _mag_z;
+        
+        Delay(20);
+    }
     
-    _offset_x = mag_offset[0];
-    _offset_y = mag_offset[1];
-    _offset_z = mag_offset[2];
-    _scale_x = mag_scale[0];
-    _scale_y = mag_scale[1];
-    _scale_z = mag_scale[2];
+    // ── 硬铁偏移（Gauss）──
+    _offset_x = (max[0] + min[0]) / 2.0f;
+    _offset_y = (max[1] + min[1]) / 2.0f;
+    _offset_z = (max[2] + min[2]) / 2.0f;
+    
+    // ── 软铁缩放（以最大轴归一化）──
+    float semi_x = (max[0] - min[0]) / 2.0f;
+    float semi_y = (max[1] - min[1]) / 2.0f;
+    float semi_z = (max[2] - min[2]) / 2.0f;
+    
+    float maxSemi = semi_x;
+    if (semi_y > maxSemi) maxSemi = semi_y;
+    if (semi_z > maxSemi) maxSemi = semi_z;
+    if (maxSemi < 0.001f) maxSemi = 1.0f;
+    
+    _scale_x = maxSemi / semi_x;
+    _scale_y = maxSemi / semi_y;
+    _scale_z = maxSemi / semi_z;
 }

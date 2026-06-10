@@ -16,11 +16,11 @@ bool IMUTask::init() {
         return false;
     }
 
-    _icm42688p.general.enable_acc(ICM42688P::General::ACCEL_ODR::ACCEL_ODR_200HZ, 
-                                  ICM42688P::General::ACCEL_FS::ACCEL_FS_2G,
+    _icm42688p.general.enable_acc(ICM42688P::General::ACCEL_ODR::ACCEL_ODR_500HZ, 
+                                  ICM42688P::General::ACCEL_FS::ACCEL_FS_4G,
                                   ICM42688P::General::FILTER_LEVEL::MEDIUM);
-    _icm42688p.general.enable_gyro(ICM42688P::General::GYRO_ODR::GYRO_ODR_200HZ, 
-                                   ICM42688P::General::GYRO_FS::GYRO_FS_500DPS,
+    _icm42688p.general.enable_gyro(ICM42688P::General::GYRO_ODR::GYRO_ODR_500HZ, 
+                                   ICM42688P::General::GYRO_FS::GYRO_FS_1000DPS,
                                    ICM42688P::General::FILTER_LEVEL::MEDIUM);
 
     // _icm42688p.Int.set_int1_pin_cfg(ICM42688P_INT_GPIO_Port, ICM42688P_INT_Pin, 
@@ -89,7 +89,7 @@ void IMUTask::taskFunction() {
             // }
         }
 
-        this->delayUntil(pdMS_TO_TICKS(5));
+        this->delayUntil(pdMS_TO_TICKS(2));
     }
 }
 

@@ -1,4 +1,5 @@
 ﻿#include "LoraTask.h"
+#include "MagTask.h"
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
@@ -101,6 +102,18 @@ void LoraTask::parseCommand(const char* cmd) {
             "STATUS: armed=%d M0=%u M1=%u M2=%u M3=%u\r\n",
             _armed, _motors[0], _motors[1], _motors[2], _motors[3]);
         _serial.send((uint8_t*)resp, strlen(resp));
+
+    // } else if (strcmp(tok, "MAGCAL") == 0) {
+    //     if (g_magCal.valid) {
+    //         snprintf(resp, sizeof(resp),
+    //                  "MAG: ox=%.6f oy=%.6f oz=%.6f\r\n"
+    //                  "MAG: sx=%.6f sy=%.6f sz=%.6f\r\n",
+    //                  g_magCal.offset_x, g_magCal.offset_y, g_magCal.offset_z,
+    //                  g_magCal.scale_x, g_magCal.scale_y, g_magCal.scale_z);
+    //     } else {
+    //         snprintf(resp, sizeof(resp), "MAGCAL: not yet calibrated\r\n");
+    //     }
+    //     _serial.send((uint8_t*)resp, strlen(resp));
 
     } else if (strcmp(tok, "HELP") == 0 || strcmp(tok, "?") == 0) {
         _serial.send((uint8_t*)
