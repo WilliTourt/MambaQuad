@@ -1,34 +1,29 @@
-﻿#include "LoraTask.h"
+#include "LoraTask.h"
 #include "MagTask.h"
+#include "ControlTask.h"
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
 
+#define RAD2DEG(r) ((r) * 57.29578f)
+
 LoraTask::LoraTask(LoraSerialTask &serial,
     FreeRTOS::Queue<DXLR01::LoraMessage_t> &fromLoraSerialQueue,
     FreeRTOS::Queue<DXLR01::LoraMessage_t> &loraQueue,
-    FreeRTOS::Queue<ControlData_t> &ctrlQueue) :
+    FreeRTOS::Queue<ControlData_t> &ctrlQueue,
+    FreeRTOS::Queue<AttitudeData_t> &attQueue) :
     Task(tskIDLE_PRIORITY + 2, 512, "LoRa"),
     _serial(serial),
     _fromLoraSerialQueue(fromLoraSerialQueue),
     _loraQueue(loraQueue),
-    _ctrlQueue(ctrlQueue) {}
+    _ctrlQueue(ctrlQueue),
+    _attQueue(attQueue) {
+    _lastAtt = {};
+}
 
 bool LoraTask::init(uint8_t channel, uint8_t level, DXLR01::TransMode mode,
                     uint16_t address, uint8_t baud) {
     this->delay(pdMS_TO_TICKS(200));
-
-    // void(channel);
-    // void(level);
-    // void(mode);
-    // void(address);
-    // void(baud);
-
-    // _lora.begin(loraSendCb, loraReceiveCb, this);
-
-    // // 信道 0x01, 速率等级 2, 透传模式, 地址 0x0001, 波特率 7=115200: 0x01, 2, DXLR01::TransMode::TRANSPARENT, 0x0001, 7
-    // bool ok = _lora.configure(channel, level, mode, address, baud);
-    
     return true;
 }
 
@@ -38,11 +33,9 @@ void LoraTask::parseCommand(const char* cmd) {
     strncpy(cmdCopy, cmd, sizeof(cmdCopy) - 1);
     cmdCopy[sizeof(cmdCopy) - 1] = '\0';
 
-    // 拆第一个 token
     char* tok = strtok(cmdCopy, " \r\n");
     if (!tok) return;
 
-    // 手动转大写
     for (char* p = tok; *p; p++) if (*p >= 'a' && *p <= 'z') *p -= 32;
 
     if (strcmp(tok, "MOTOR") == 0 || strcmp(tok, "M") == 0) {
@@ -69,8 +62,9 @@ void LoraTask::parseCommand(const char* cmd) {
         }
         _serial.send((uint8_t*)resp, strlen(resp));
 
-        // 发给 ControlTask
         ControlData_t ctrlData;
+        memset(&ctrlData, 0, sizeof(ctrlData));
+        ctrlData.cmdType = 0;
         for (int i = 0; i < 4; i++) ctrlData.motor_throttle[i] = _motors[i];
         ctrlData.armed = _armed;
         ctrlData.timestamp_ms = xTaskGetTickCount();
@@ -79,8 +73,9 @@ void LoraTask::parseCommand(const char* cmd) {
     } else if (strcmp(tok, "ARM") == 0) {
         _armed = true;
         _serial.send((uint8_t*)"OK: ARMED\r\n", 11);
-        // 更新 ControlTask
         ControlData_t ctrlData;
+        memset(&ctrlData, 0, sizeof(ctrlData));
+        ctrlData.cmdType = 0;
         for (int i = 0; i < 4; i++) ctrlData.motor_throttle[i] = _motors[i];
         ctrlData.armed = true;
         ctrlData.timestamp_ms = xTaskGetTickCount();
@@ -103,24 +98,75 @@ void LoraTask::parseCommand(const char* cmd) {
             _armed, _motors[0], _motors[1], _motors[2], _motors[3]);
         _serial.send((uint8_t*)resp, strlen(resp));
 
-    // } else if (strcmp(tok, "MAGCAL") == 0) {
-    //     if (g_magCal.valid) {
-    //         snprintf(resp, sizeof(resp),
-    //                  "MAG: ox=%.6f oy=%.6f oz=%.6f\r\n"
-    //                  "MAG: sx=%.6f sy=%.6f sz=%.6f\r\n",
-    //                  g_magCal.offset_x, g_magCal.offset_y, g_magCal.offset_z,
-    //                  g_magCal.scale_x, g_magCal.scale_y, g_magCal.scale_z);
-    //     } else {
-    //         snprintf(resp, sizeof(resp), "MAGCAL: not yet calibrated\r\n");
-    //     }
-    //     _serial.send((uint8_t*)resp, strlen(resp));
+    } else if (strcmp(tok, "TEL") == 0) {
+        char* sub = strtok(nullptr, " \r\n");
+        if (sub) for (char* p = sub; *p; p++) if (*p >= 'a' && *p <= 'z') *p -= 32;
+        if (sub && strcmp(sub, "OFF") == 0) {
+            _telEnabled = false;
+            _serial.send((uint8_t*)"OK: TEL OFF\r\n", 13);
+        } else {
+            _telEnabled = true;
+            _serial.send((uint8_t*)"OK: TEL ON\r\n", 12);
+        }
+
+    } else if (strcmp(tok, "PID") == 0) {
+        // PID <R|P|Y> <P|I|D> <value>  or  PID RESET
+        char* axs = strtok(nullptr, " \r\n");
+        if (axs) for (char* p = axs; *p; p++) if (*p >= 'a' && *p <= 'z') *p -= 32;
+
+        if (axs && strcmp(axs, "RESET") == 0) {
+            ControlData_t ctrlData;
+            memset(&ctrlData, 0, sizeof(ctrlData));
+            ctrlData.cmdType = 2;
+            ctrlData.timestamp_ms = xTaskGetTickCount();
+            _ctrlQueue.sendToBack(ctrlData, 0);
+            _serial.send((uint8_t*)"OK: PID RESET\r\n", 14);
+            return;
+        }
+
+        char* gn  = strtok(nullptr, " \r\n");
+        char* vl  = strtok(nullptr, " \r\n");
+        if (!axs || !gn || !vl) {
+            _serial.send((uint8_t*)"ERR: PID <R|P|Y> <P|I|D> <value>\r\n", 36);
+            return;
+        }
+        for (char* p = axs; *p; p++) if (*p >= 'a' && *p <= 'z') *p -= 32;
+        for (char* p = gn; *p; p++) if (*p >= 'a' && *p <= 'z') *p -= 32;
+
+        uint8_t axis = 255, gain = 255;
+        if (strcmp(axs, "R") == 0 || strcmp(axs, "ROLL") == 0) axis = 0;
+        else if (strcmp(axs, "P") == 0 || strcmp(axs, "PITCH") == 0) axis = 1;
+        else if (strcmp(axs, "Y") == 0 || strcmp(axs, "YAW") == 0) axis = 2;
+        else { _serial.send((uint8_t*)"ERR: axis must be R/P/Y\r\n", 25); return; }
+
+        if (strcmp(gn, "P") == 0 || strcmp(gn, "KP") == 0) gain = 0;
+        else if (strcmp(gn, "I") == 0 || strcmp(gn, "KI") == 0) gain = 1;
+        else if (strcmp(gn, "D") == 0 || strcmp(gn, "KD") == 0) gain = 2;
+        else { _serial.send((uint8_t*)"ERR: gain must be P/I/D\r\n", 25); return; }
+
+        float val = (float)strtod(vl, nullptr);
+
+        ControlData_t ctrlData;
+        memset(&ctrlData, 0, sizeof(ctrlData));
+        ctrlData.cmdType = 1;
+        ctrlData.pid_axis = axis;
+        ctrlData.pid_gain = gain;
+        ctrlData.pid_value = val;
+        ctrlData.timestamp_ms = xTaskGetTickCount();
+        _ctrlQueue.sendToBack(ctrlData, 0);
+
+        snprintf(resp, sizeof(resp), "OK: PID %c%c = %.4f\r\n",
+            "RPY"[axis], "PID"[gain], val);
+        _serial.send((uint8_t*)resp, strlen(resp));
 
     } else if (strcmp(tok, "HELP") == 0 || strcmp(tok, "?") == 0) {
         _serial.send((uint8_t*)
             "MOTOR <n|ALL> <0-1000>  set motor speed\r\n"
             "ARM/DISARM/STOP/ESTOP   arm/stop motors\r\n"
-            "STATUS                    show status\r\n",
-            120);
+            "PID <R|P|Y> <P|I|D> <v> tune PID gains\r\n"
+            "STATUS                  show status\r\n"
+            "TEL ON/OFF              serial plot CSV\r\n",
+            220);
 
     } else {
         snprintf(resp, sizeof(resp), "ERR: unknown cmd '%s', try HELP\r\n", tok);
@@ -128,11 +174,31 @@ void LoraTask::parseCommand(const char* cmd) {
     }
 }
 
+void LoraTask::_sendTelemetry() {
+    // CSV: roll_rate,pitch_rate,yaw_rate,m0,m1,m2,m3 (rate*10 deg/s, motor raw)
+    int rx = (int)(RAD2DEG(_lastAtt.roll_rate)  * 10.0f);
+    int ry = (int)(RAD2DEG(_lastAtt.pitch_rate) * 10.0f);
+    int rz = (int)(RAD2DEG(_lastAtt.yaw_rate)   * 10.0f);
+
+    char buf[64];
+    int len = snprintf(buf, sizeof(buf),
+        "%d,%d,%d,%d,%d,%d,%d\r\n",
+        rx, ry, rz,
+        ControlTask::motor_throttle[0], ControlTask::motor_throttle[1],
+        ControlTask::motor_throttle[2], ControlTask::motor_throttle[3]);
+
+    if (len > 0 && len < (int)sizeof(buf)) {
+        _serial.send((uint8_t*)buf, len);
+    }
+}
+
 void LoraTask::taskFunction() {
     static uint8_t buf[256];
 
     for (;;) {
-        auto message = _fromLoraSerialQueue.receive(pdMS_TO_TICKS(500));
+        // 解锁时加速轮询以提速遥测
+        TickType_t serialTO = _armed ? pdMS_TO_TICKS(5) : pdMS_TO_TICKS(100);
+        auto message = _fromLoraSerialQueue.receive(serialTO);
         if (message) {
             uint16_t len = message->length;
             if (len > 255) len = 255;
@@ -140,9 +206,24 @@ void LoraTask::taskFunction() {
             buf[len] = '\0';
 
             if (len > 0) {
-                // 回显到 USB 调试口
                 DBGQ.sendToBack(buf, 0);
                 parseCommand((const char*)buf);
+            }
+        }
+
+        // try to update latest attitude (non-blocking)
+        auto att = _attQueue.receive(pdMS_TO_TICKS(0));
+        if (att) {
+            _lastAtt = *att;
+            _hasAtt = true;
+        }
+
+        // 解锁时 ~200Hz CSV，未解锁静默
+        if (_armed && _telEnabled && _hasAtt) {
+            TickType_t now = xTaskGetTickCount();
+            if ((now - _lastTelTick) >= pdMS_TO_TICKS(5)) {
+                _lastTelTick = now;
+                _sendTelemetry();
             }
         }
     }

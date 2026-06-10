@@ -67,8 +67,8 @@
 
 #include <cmath>
 
-/** @brief Default sample time for PID controller (1.0 second) */
-#define PID_DEFAULT_SAMPLE_TIME 1.0f
+/** @brief Default sample time for PID controller (2ms) */
+#define PID_DEFAULT_SAMPLE_TIME 0.002f
 
 /** @brief Default proportional weight for weighted proportional mode */
 #define PID_DEFAULT_PROP_WEIGHT 1.0f
@@ -231,6 +231,10 @@ class PIDCtrller {
          * @return Current error (target - measurement)
          */
         inline float getError() const { return _error; }
+
+        inline float getKp() const { return _kp; }
+        inline float getKi() const { return _ki; }
+        inline float getKd() const { return _kd; }
 
         /**
          * @brief Get the current integral value

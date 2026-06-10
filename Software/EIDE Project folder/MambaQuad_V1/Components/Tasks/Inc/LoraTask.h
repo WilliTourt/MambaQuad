@@ -33,7 +33,8 @@ class LoraTask : public FreeRTOS::Task {
         LoraTask(LoraSerialTask &serial,
                  FreeRTOS::Queue<DXLR01::LoraMessage_t> &fromLoraSerialQueue,
                  FreeRTOS::Queue<DXLR01::LoraMessage_t> &LoraQueue,
-                 FreeRTOS::Queue<ControlData_t> &ctrlQueue);
+                 FreeRTOS::Queue<ControlData_t> &ctrlQueue,
+                 FreeRTOS::Queue<AttitudeData_t> &attQueue);
 
         bool init(uint8_t channel, uint8_t level, DXLR01::TransMode mode,
                   uint16_t address, uint8_t baud);
@@ -41,11 +42,18 @@ class LoraTask : public FreeRTOS::Task {
     private:
         void taskFunction() override;
         void parseCommand(const char* cmd);
+        void _sendTelemetry();
 
         LoraSerialTask &_serial;
         FreeRTOS::Queue<DXLR01::LoraMessage_t> &_fromLoraSerialQueue;
         FreeRTOS::Queue<DXLR01::LoraMessage_t> &_loraQueue;
         FreeRTOS::Queue<ControlData_t> &_ctrlQueue;
+        FreeRTOS::Queue<AttitudeData_t> &_attQueue;
+
+        AttitudeData_t _lastAtt;
+        bool _hasAtt = false;
+        bool _telEnabled = true;
+        uint32_t _lastTelTick = 0;
 
         // 状态
         bool _armed = false;

@@ -58,20 +58,31 @@ void AttitudeTask::taskFunction() {
         const float D2R = 3.14159265358979f / 180.0f;
 
         // run ESKF
-        eskf.update(imu->ax, imu->ay, imu->az,          // accel  m/s²
-                     imu->gx * D2R, imu->gy * D2R, imu->gz * D2R,  // gyro rad/s
-                     mx, my, mz,                         // mag    Gauss
-                     dt);                                // dt     seconds
+        eskf.update(imu->ax, imu->ay, imu->az,                      // accel  m/s²
+                     imu->gx * D2R, imu->gy * D2R, imu->gz * D2R,   // gyro rad/s
+                     mx, my, mz,                                    // mag    Gauss
+                     dt);                                           // dt     seconds
 
         // convert quaternion → Euler angles
         _att.roll  = eskf.getRoll();
         _att.pitch = eskf.getPitch();
         _att.yaw   = eskf.getYaw();
 
-        // angular rates (direct from gyro, rad/s)
-        _att.roll_rate  = imu->gx * D2R;
-        _att.pitch_rate = imu->gy * D2R;
-        _att.yaw_rate   = imu->gz * D2R;
+        // angular rates: apply LPF to damp vibration noise
+        // filtered = beta*raw + (1-beta)*filtered, cutoff ~ beta*fs/(2π)
+        // beta=0.2 @ 500Hz → cutoff ≈ 16Hz, good balance for acro
+        static float rx_f = 0, ry_f = 0, rz_f = 0;
+        float rx_raw = imu->gy * D2R;   // roll rate = about front axis
+        float ry_raw = imu->gx * D2R;   // pitch rate = about right axis
+        float rz_raw = imu->gz * D2R;   // yaw rate = about up axis
+        const float BETA = 0.2f;
+        rx_f = BETA * rx_raw + (1.0f - BETA) * rx_f;
+        ry_f = BETA * ry_raw + (1.0f - BETA) * ry_f;
+        rz_f = BETA * rz_raw + (1.0f - BETA) * rz_f;
+
+        _att.roll_rate  = rx_f;
+        _att.pitch_rate = ry_f;
+        _att.yaw_rate   = rz_f;
 
         _att.timestamp_ms = imu->timestamp_ms;
 

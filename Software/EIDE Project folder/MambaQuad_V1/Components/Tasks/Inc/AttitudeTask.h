@@ -14,8 +14,6 @@ class AttitudeTask : public FreeRTOS::Task {
     private:
         void taskFunction() override;
 
-        void _update(const IMUData_t &imu, const MagData_t *mag, float dt);
-
         FreeRTOS::Queue<IMUData_t>  &_imuQueue;
         FreeRTOS::Queue<MagData_t>  &_magQueue;
         FreeRTOS::Queue<AttitudeData_t> &_attQueue;

@@ -23,7 +23,7 @@
 #include "math.h"
 
 #define GRAVITY_ACC 9.806651f
-#define PI 3.14159265f
+#define PI 3.14159265358979f
 
 class ESKF
 {
@@ -48,9 +48,9 @@ class ESKF
         inline float get_qy() { return q_o.qy; }
         inline float get_qz() { return q_o.qz; }
         
-        // 从四元数获取欧拉角（rad，ZYX顺序）
-        float getRoll()  { return atan2f(2.0f*(q_o.qw*q_o.qx + q_o.qy*q_o.qz), 1.0f - 2.0f*(q_o.qx*q_o.qx + q_o.qy*q_o.qy)); }
-        float getPitch() { return asinf(2.0f*(q_o.qw*q_o.qy - q_o.qz*q_o.qx)); }
+        // 从四元数获取欧拉角（rad，飞控坐标系：roll=绕前轴Y, pitch=绕右轴X, yaw=绕上轴Z）
+        float getRoll()  { return asinf(2.0f*(q_o.qw*q_o.qy - q_o.qz*q_o.qx)); }
+        float getPitch() { return atan2f(2.0f*(q_o.qw*q_o.qx + q_o.qy*q_o.qz), 1.0f - 2.0f*(q_o.qx*q_o.qx + q_o.qy*q_o.qy)); }
         float getYaw()   { return atan2f(2.0f*(q_o.qw*q_o.qz + q_o.qx*q_o.qy), 1.0f - 2.0f*(q_o.qy*q_o.qy + q_o.qz*q_o.qz)); }
     
     private:

@@ -91,8 +91,14 @@ typedef struct {
 
 
 typedef struct {
-    uint16_t motor_throttle[4];
+    uint8_t cmdType;       // 0=motor, 1=PID update
     bool armed;
+    uint16_t motor_throttle[4];
+
+    // PID update (cmdType=1)
+    uint8_t pid_axis;      // 0=roll, 1=pitch, 2=yaw
+    uint8_t pid_gain;      // 0=KP, 1=KI, 2=KD
+    float   pid_value;
 
     uint32_t timestamp_ms;
 } ControlData_t;
