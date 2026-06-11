@@ -124,6 +124,28 @@ void LoraTask::parseCommand(const char* cmd) {
             return;
         }
 
+        if (axs && strcmp(axs, "ON") == 0) {
+            ControlData_t ctrlData;
+            memset(&ctrlData, 0, sizeof(ctrlData));
+            ctrlData.cmdType = 4;
+            ctrlData.pid_axis = 1; // ON
+            ctrlData.timestamp_ms = xTaskGetTickCount();
+            _ctrlQueue.sendToBack(ctrlData, 0);
+            _serial.send((uint8_t*)"OK: PID ON\r\n", 11);
+            return;
+        }
+
+        if (axs && strcmp(axs, "OFF") == 0) {
+            ControlData_t ctrlData;
+            memset(&ctrlData, 0, sizeof(ctrlData));
+            ctrlData.cmdType = 4;
+            ctrlData.pid_axis = 0; // OFF
+            ctrlData.timestamp_ms = xTaskGetTickCount();
+            _ctrlQueue.sendToBack(ctrlData, 0);
+            _serial.send((uint8_t*)"OK: PID OFF\r\n", 12);
+            return;
+        }
+
         char* gn  = strtok(nullptr, " \r\n");
         char* vl  = strtok(nullptr, " \r\n");
         if (!axs || !gn || !vl) {
@@ -159,11 +181,41 @@ void LoraTask::parseCommand(const char* cmd) {
             "RPY"[axis], "PID"[gain], val);
         _serial.send((uint8_t*)resp, strlen(resp));
 
+    } else if (strcmp(tok, "AT") == 0) {
+        char* axs = strtok(nullptr, " \r\n");
+        char* vl  = strtok(nullptr, " \r\n");
+        if (!axs || !vl) {
+            _serial.send((uint8_t*)"ERR: AT <R|P|Y> <degrees>\r\n", 27);
+            return;
+        }
+        for (char* p = axs; *p; p++) if (*p >= 'a' && *p <= 'z') *p -= 32;
+
+        uint8_t axis = 255;
+        if (strcmp(axs, "R") == 0 || strcmp(axs, "ROLL") == 0) axis = 0;
+        else if (strcmp(axs, "P") == 0 || strcmp(axs, "PITCH") == 0) axis = 1;
+        else if (strcmp(axs, "Y") == 0 || strcmp(axs, "YAW") == 0) axis = 2;
+        else { _serial.send((uint8_t*)"ERR: axis R/P/Y\r\n", 17); return; }
+
+        float deg = (float)strtod(vl, nullptr);
+        float rad = deg * 0.0174533f;
+
+        ControlData_t ctrl;
+        memset(&ctrl, 0, sizeof(ctrl));
+        ctrl.cmdType = 3;
+        ctrl.pid_axis = axis;
+        ctrl.pid_value = rad;
+        ctrl.timestamp_ms = xTaskGetTickCount();
+        _ctrlQueue.sendToBack(ctrl, 0);
+
+        snprintf(resp, sizeof(resp), "OK: AT %c = %.2f deg\r\n", "RPY"[axis], deg);
+        _serial.send((uint8_t*)resp, strlen(resp));
+
     } else if (strcmp(tok, "HELP") == 0 || strcmp(tok, "?") == 0) {
         _serial.send((uint8_t*)
             "MOTOR <n|ALL> <0-1000>  set motor speed\r\n"
             "ARM/DISARM/STOP/ESTOP   arm/stop motors\r\n"
             "PID <R|P|Y> <P|I|D> <v> tune PID gains\r\n"
+            "AT <R|P|Y> <deg>        set angle target\r\n"
             "STATUS                  show status\r\n"
             "TEL ON/OFF              serial plot CSV\r\n",
             220);

@@ -13,9 +13,9 @@ ControlTask::ControlTask(DShot &m1, DShot &m2, DShot &m3, DShot &m4,
     _pid_roll_rate(PID_ROLL_RATE_KP, PID_ROLL_RATE_KI, PID_ROLL_RATE_KD),
     _pid_pitch_rate(PID_PITCH_RATE_KP, PID_PITCH_RATE_KI, PID_PITCH_RATE_KD),
     _pid_yaw_rate(PID_YAW_RATE_KP, PID_YAW_RATE_KI, PID_YAW_RATE_KD),
-    // _pid_roll_angle,
-    // _pid_pitch_angle,
-    // _pid_yaw_angle,
+    _pid_roll_angle(PID_ROLL_ANGLE_KP, PID_ROLL_ANGLE_KI, PID_ROLL_ANGLE_KD),
+    _pid_pitch_angle(PID_PITCH_ANGLE_KP, PID_PITCH_ANGLE_KI, PID_PITCH_ANGLE_KD),
+    _pid_yaw_angle(PID_YAW_ANGLE_KP, PID_YAW_ANGLE_KI, PID_YAW_ANGLE_KD),
     _ctrlQueue(ctrlQueue),
     _attQueue(attQueue) {
     instance = this;
@@ -61,10 +61,19 @@ void ControlTask::_arm() {
     _pid_pitch_rate.setSampleTime(0.002f);
     _pid_yaw_rate.setSampleTime(0.002f);
 
-    // 条件积分：只在 rate<1 rad/s 时积 I，手动掰它时 I 不累
-    _pid_roll_rate.setIntegralMode(PIDCtrller::IntegralMode_t::Conditional, 1.0f);
-    _pid_pitch_rate.setIntegralMode(PIDCtrller::IntegralMode_t::Conditional, 1.0f);
-    _pid_yaw_rate.setIntegralMode(PIDCtrller::IntegralMode_t::Conditional, 1.0f);
+    _pid_roll_rate.setIntegralMode(PIDCtrller::IntegralMode_t::Conditional, 0.15f);
+    _pid_pitch_rate.setIntegralMode(PIDCtrller::IntegralMode_t::Conditional, 0.15f);
+    _pid_yaw_rate.setIntegralMode(PIDCtrller::IntegralMode_t::Conditional, 0.15f);
+    _pid_roll_rate.setDerivativeMode(PIDCtrller::DerivativeMode_t::OnMeasurement);
+    _pid_pitch_rate.setDerivativeMode(PIDCtrller::DerivativeMode_t::OnMeasurement);
+    _pid_yaw_rate.setDerivativeMode(PIDCtrller::DerivativeMode_t::OnMeasurement);
+
+    _pid_roll_angle.reset();
+    _pid_pitch_angle.reset();
+    _pid_yaw_angle.reset();
+    _pid_roll_angle.setTarget(0.0f);
+    _pid_pitch_angle.setTarget(0.0f);
+    // _pid_yaw_angle.setTarget(0.0f);
 
     _armed = true;
     DBGQ.sendToBack((uint8_t*)"ControlTask: Motors armed.", 0);
@@ -143,7 +152,35 @@ void ControlTask::taskFunction() {
                 _pid_roll_rate.reset();
                 _pid_pitch_rate.reset();
                 _pid_yaw_rate.reset();
+                _pid_roll_angle.reset();
+                _pid_pitch_angle.reset();
+                _pid_yaw_angle.reset();
                 DBGQ.sendToBack((uint8_t*)"PID RESET\r\n", 10);
+                continue;
+            }
+
+            if (cmd->cmdType == 3) {
+                // AT: set angle target (value in rad, already converted in LoraTask)
+                uint8_t ax = cmd->pid_axis;
+                if (ax < 3) {
+                    _angleTarget[ax] = cmd->pid_value;
+                    if (ax == 0) _pid_roll_angle.setTarget(cmd->pid_value);
+                    if (ax == 1) _pid_pitch_angle.setTarget(cmd->pid_value);
+                    if (ax == 2) _pid_yaw_angle.setTarget(cmd->pid_value);
+                    char buf[48];
+                    snprintf(buf, sizeof(buf), "AT %c=%.2f deg\r\n",
+                        "RPY"[ax], cmd->pid_value * 57.29578f);
+                    DBGQ.sendToBack((uint8_t*)buf, 0);
+                }
+                continue;
+            }
+
+            if (cmd->cmdType == 4) {
+                // PID ON/OFF: pid_axis=0→OFF, 1→ON
+                _pidActive = (cmd->pid_axis == 1);
+                char buf[32];
+                snprintf(buf, sizeof(buf), "PID %s\r\n", _pidActive ? "ON" : "OFF");
+                DBGQ.sendToBack((uint8_t*)buf, 0);
                 continue;
             }
 
@@ -168,24 +205,33 @@ void ControlTask::taskFunction() {
             }
         }
 
-        // ── PID 控制（解锁 + 有姿态数据 + 油门 > 怠速）──
-        if (_armed && _hasIMU && _baseThrottle > 48) {
-            float roll_out  = _pid_roll_rate.calc(_att.roll_rate,  PID_OUT_LIMIT, -PID_OUT_LIMIT);
-            float pitch_out = _pid_pitch_rate.calc(_att.pitch_rate, PID_OUT_LIMIT, -PID_OUT_LIMIT);
-            float yaw_out   = _pid_yaw_rate.calc(_att.yaw_rate,    PID_OUT_LIMIT, -PID_OUT_LIMIT);
+        /*
+        Thinking:
+        外圈角度环，输出的东西给到角速度环的输入。角度给出需要的角速度，从而改变角度
+        内圈角速度环输出的直接是电机差速，电机差速越大扭矩越大，得到角加速度，然后使得角速度得到控制
+        最终采样角度传回角度环
+        */
+        // PID Ctrl
+        if (_armed && _pidActive && _hasIMU && _baseThrottle > 48) {
+            _pid_roll_rate.setTarget(_pid_roll_angle.calc(_att.roll, PID_ANGLE_OUT_LIMIT, -PID_ANGLE_OUT_LIMIT));
+            _pid_pitch_rate.setTarget(_pid_pitch_angle.calc(_att.pitch, PID_ANGLE_OUT_LIMIT, -PID_ANGLE_OUT_LIMIT));
+
+            float roll_out  = _pid_roll_rate.calc(_att.roll_rate,  PID_RATE_OUT_LIMIT, -PID_RATE_OUT_LIMIT);
+            float pitch_out = _pid_pitch_rate.calc(_att.pitch_rate, PID_RATE_OUT_LIMIT, -PID_RATE_OUT_LIMIT);
+            float yaw_out   = _pid_yaw_rate.calc(_att.yaw_rate,    PID_RATE_OUT_LIMIT, -PID_RATE_OUT_LIMIT);
             
             /*
-                M4 M2
-                  X    ↑
-                M3 M1
+                 M4(CW) M2(CCW)
+                       X        ↑
+                M3(CCW) M1(CW)
             */
 
-            // X-quad 混控
+            // X-quad Mixer https://g413164351.github.io/pages/px4_mixer_tutorial.html
             int16_t t  = (int16_t)_baseThrottle;
-            int16_t m1 = t + (int16_t)(-roll_out - pitch_out + yaw_out); // M0 右后
-            int16_t m2 = t + (int16_t)(-roll_out + pitch_out + yaw_out); // M1 右前
-            int16_t m3 = t + (int16_t)( roll_out - pitch_out - yaw_out); // M2 左后
-            int16_t m4 = t + (int16_t)( roll_out + pitch_out - yaw_out); // M3 左前
+            int16_t m1 = t + (int16_t)(-roll_out - pitch_out - yaw_out); // M1 RR (Right Rear)
+            int16_t m2 = t + (int16_t)(-roll_out + pitch_out + yaw_out); // M2 RF (Right Front)
+            int16_t m3 = t + (int16_t)( roll_out - pitch_out + yaw_out); // M3 LR
+            int16_t m4 = t + (int16_t)( roll_out + pitch_out - yaw_out); // M4 LF
 
             auto clamp = [](int16_t v) -> uint16_t {
                 if (v < 48)  return 48;
@@ -199,6 +245,6 @@ void ControlTask::taskFunction() {
             motor_throttle[3] = clamp(m4);
         }
 
-        this->delay(pdMS_TO_TICKS(2));
+        this->delay(pdMS_TO_TICKS(2)); // ~500ms cycle
     }
 }
