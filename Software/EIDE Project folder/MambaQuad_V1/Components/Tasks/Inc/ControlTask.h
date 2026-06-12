@@ -7,25 +7,25 @@
 
 #include "data_types.h"
 
-#define PID_ROLL_RATE_KP  160.0f
-#define PID_ROLL_RATE_KI  20.0f
-#define PID_ROLL_RATE_KD  1.9f
+#define PID_ROLL_RATE_KP  126.0f
+#define PID_ROLL_RATE_KI  22.0f
+#define PID_ROLL_RATE_KD  1.92f
 
-#define PID_PITCH_RATE_KP 160.0f
-#define PID_PITCH_RATE_KI 20.0f
-#define PID_PITCH_RATE_KD 1.9f
+#define PID_PITCH_RATE_KP 126.0f
+#define PID_PITCH_RATE_KI 22.0f
+#define PID_PITCH_RATE_KD 1.92f
 
-#define PID_YAW_RATE_KP   80.0f
-#define PID_YAW_RATE_KI   0.0f
-#define PID_YAW_RATE_KD   0.2f
+#define PID_YAW_RATE_KP   44.5f
+#define PID_YAW_RATE_KI   0.5f
+#define PID_YAW_RATE_KD   1.66f
 
-#define PID_ROLL_ANGLE_KP   12.0f
-#define PID_ROLL_ANGLE_KI   5.0f
-#define PID_ROLL_ANGLE_KD   0.0f
+#define PID_ROLL_ANGLE_KP  3.58f
+#define PID_ROLL_ANGLE_KI  1.48f
+#define PID_ROLL_ANGLE_KD  0
 
-#define PID_PITCH_ANGLE_KP  12.0f
-#define PID_PITCH_ANGLE_KI  5.0f
-#define PID_PITCH_ANGLE_KD  0.0f
+#define PID_PITCH_ANGLE_KP 3.58f
+#define PID_PITCH_ANGLE_KI 1.48f
+#define PID_PITCH_ANGLE_KD 0
 
 #define PID_YAW_ANGLE_KP   0.0f
 #define PID_YAW_ANGLE_KI   0.0f

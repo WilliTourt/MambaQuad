@@ -19,7 +19,7 @@ void AttitudeTask::taskFunction() {
     DBGQ.sendToBack((uint8_t*)"AttitudeTask started (ESKF).", 0);
 
     static ESKF eskf;  // default noise params
-    uint32_t lastPrint = 0;
+    // uint32_t lastPrint = 0;
 
     for (;;) {
         // wait for next IMU sample
@@ -90,13 +90,13 @@ void AttitudeTask::taskFunction() {
         _attQueue.sendToBack(_att, 0);
 
         // debug print every 1s
-        if (_att.timestamp_ms - lastPrint >= 1000) {
-            lastPrint = _att.timestamp_ms;
-            char dbg[96];
-            snprintf(dbg, sizeof(dbg),
-                     "ATTD R=%.1f P=%.1f Y=%.1f",
-                     _att.roll * 57.3f, _att.pitch * 57.3f, _att.yaw * 57.3f);
-            DBGQ.sendToBack((uint8_t*)dbg, 0);
-        }
+        // if (_att.timestamp_ms - lastPrint >= 1000) {
+        //     lastPrint = _att.timestamp_ms;
+        //     char dbg[96];
+        //     snprintf(dbg, sizeof(dbg),
+        //              "ATTD R=%.1f P=%.1f Y=%.1f",
+        //              _att.roll * 57.3f, _att.pitch * 57.3f, _att.yaw * 57.3f);
+        //     DBGQ.sendToBack((uint8_t*)dbg, 0);
+        // }
     }
 }

@@ -49,31 +49,42 @@ void ControlTask::_arm() {
     _enableSending();
     this->delay(pdMS_TO_TICKS(2000));
 
-    _pid_roll_rate.reset();
-    _pid_pitch_rate.reset();
-    _pid_yaw_rate.reset();
-    _pid_roll_rate.setTarget(0.0f);
-    _pid_pitch_rate.setTarget(0.0f);
-    _pid_yaw_rate.setTarget(0.0f);
+    {
+        _pid_roll_rate.reset();
+        _pid_pitch_rate.reset();
+        _pid_yaw_rate.reset();
+        _pid_roll_rate.setTarget(0.0f);
+        _pid_pitch_rate.setTarget(0.0f);
+        _pid_yaw_rate.setTarget(0.0f);
 
-    // 控制循环 ~500Hz → dt=0.002s，必须设对否则 I 项积分速度完全不对
-    _pid_roll_rate.setSampleTime(0.002f);
-    _pid_pitch_rate.setSampleTime(0.002f);
-    _pid_yaw_rate.setSampleTime(0.002f);
+        // 控制循环 ~500Hz → dt=0.002s，必须设对否则 I 项积分速度完全不对
+        _pid_roll_rate.setSampleTime(0.002f);
+        _pid_pitch_rate.setSampleTime(0.002f);
+        _pid_yaw_rate.setSampleTime(0.002f);
 
-    _pid_roll_rate.setIntegralMode(PIDCtrller::IntegralMode_t::Conditional, 0.15f);
-    _pid_pitch_rate.setIntegralMode(PIDCtrller::IntegralMode_t::Conditional, 0.15f);
-    _pid_yaw_rate.setIntegralMode(PIDCtrller::IntegralMode_t::Conditional, 0.15f);
-    _pid_roll_rate.setDerivativeMode(PIDCtrller::DerivativeMode_t::OnMeasurement);
-    _pid_pitch_rate.setDerivativeMode(PIDCtrller::DerivativeMode_t::OnMeasurement);
-    _pid_yaw_rate.setDerivativeMode(PIDCtrller::DerivativeMode_t::OnMeasurement);
+        _pid_roll_rate.setIntegralMode(PIDCtrller::IntegralMode_t::Conditional, 0.15f);
+        _pid_pitch_rate.setIntegralMode(PIDCtrller::IntegralMode_t::Conditional, 0.15f);
+        _pid_yaw_rate.setIntegralMode(PIDCtrller::IntegralMode_t::Conditional, 0.15f);
+        _pid_roll_rate.setDerivativeMode(PIDCtrller::DerivativeMode_t::OnMeasurement);
+        _pid_pitch_rate.setDerivativeMode(PIDCtrller::DerivativeMode_t::OnMeasurement);
+        _pid_yaw_rate.setDerivativeMode(PIDCtrller::DerivativeMode_t::OnMeasurement);
+    }
 
-    _pid_roll_angle.reset();
-    _pid_pitch_angle.reset();
-    _pid_yaw_angle.reset();
-    _pid_roll_angle.setTarget(0.0f);
-    _pid_pitch_angle.setTarget(0.0f);
-    // _pid_yaw_angle.setTarget(0.0f);
+    {
+        _pid_roll_angle.reset();
+        _pid_pitch_angle.reset();
+        _pid_yaw_angle.reset();
+        _pid_roll_angle.setTarget(0.0f);
+        _pid_pitch_angle.setTarget(0.0f);
+        // _pid_yaw_angle.setTarget(0.0f);
+
+        _pid_roll_angle.setSampleTime(0.002f);
+        _pid_pitch_angle.setSampleTime(0.002f);
+        _pid_yaw_angle.setSampleTime(0.002f);
+
+        _pid_roll_angle.setIntegralMode(PIDCtrller::IntegralMode_t::Conditional, 0.15f);
+        _pid_pitch_angle.setIntegralMode(PIDCtrller::IntegralMode_t::Conditional, 0.15f);
+    }
 
     _armed = true;
     DBGQ.sendToBack((uint8_t*)"ControlTask: Motors armed.", 0);
@@ -105,9 +116,12 @@ void ControlTask::_handlePIDCmd(uint8_t axis, uint8_t gain, float value) {
     const char* axisName = nullptr;
 
     switch (axis) {
-        case 0: pid = &_pid_roll_rate;  axisName = "ROLL"; break;
-        case 1: pid = &_pid_pitch_rate; axisName = "PITCH"; break;
-        case 2: pid = &_pid_yaw_rate;   axisName = "YAW"; break;
+        case 0: pid = &_pid_roll_rate;  axisName = "ROLL_R"; break;
+        case 1: pid = &_pid_pitch_rate; axisName = "PITCH_R"; break;
+        case 2: pid = &_pid_yaw_rate;   axisName = "YAW_R"; break;
+        case 3: pid = &_pid_roll_angle; axisName = "ROLL_A"; break;
+        case 4: pid = &_pid_pitch_angle;axisName = "PITCH_A";break;
+        case 5: pid = &_pid_yaw_angle;  axisName = "YAW_A"; break;
         default: return;
     }
 
@@ -213,9 +227,41 @@ void ControlTask::taskFunction() {
         */
         // PID Ctrl
         if (_armed && _pidActive && _hasIMU && _baseThrottle > 48) {
-            _pid_roll_rate.setTarget(_pid_roll_angle.calc(_att.roll, PID_ANGLE_OUT_LIMIT, -PID_ANGLE_OUT_LIMIT));
-            _pid_pitch_rate.setTarget(_pid_pitch_angle.calc(_att.pitch, PID_ANGLE_OUT_LIMIT, -PID_ANGLE_OUT_LIMIT));
+            // ── 20Hz 四阶巴特沃斯低通 (两节级联, fs=500Hz) ──
+            // 65Hz衰减 -41dB, 延迟 ~21ms, 四阶陡降一刀切死
+            float r_out, p_out;
+            {
+                // Section 1: fc=20Hz Q=0.541
+                const float b10=0.0133f, b11=0.0266f, b12=0.0133f;
+                const float a11=-1.6000f, a12=0.6532f;
+                // Section 2: fc=20Hz Q=1.307
+                const float b20=0.0133f, b21=0.0266f, b22=0.0133f;
+                const float a21=-1.3762f, a22=0.4294f;
 
+                static float r_x1=0, r_x2=0, r_y1=0, r_y2=0;
+                static float r2_x1=0, r2_x2=0, r2_y1=0, r2_y2=0;
+                static float p_x1=0, p_x2=0, p_y1=0, p_y2=0;
+                static float p2_x1=0, p2_x2=0, p2_y1=0, p2_y2=0;
+
+                // Roll: Section1 → Section2
+                float rt = b10*_att.roll + b11*r_x1 + b12*r_x2 - a11*r_y1 - a12*r_y2;
+                r_x2=r_x1; r_x1=_att.roll; r_y2=r_y1; r_y1=rt;
+                r_out=b20*rt + b21*r2_x1 + b22*r2_x2 - a21*r2_y1 - a22*r2_y2;
+                r2_x2=r2_x1; r2_x1=rt; r2_y2=r2_y1; r2_y1=r_out;
+
+                // Pitch: Section1 → Section2
+                float pt = b10*_att.pitch + b11*p_x1 + b12*p_x2 - a11*p_y1 - a12*p_y2;
+                p_x2=p_x1; p_x1=_att.pitch; p_y2=p_y1; p_y1=pt;
+                p_out=b20*pt + b21*p2_x1 + b22*p2_x2 - a21*p2_y1 - a22*p2_y2;
+                p2_x2=p2_x1; p2_x1=pt; p2_y2=p2_y1; p2_y1=p_out;
+
+                _pid_roll_rate.setTarget(
+                    _pid_roll_angle.calc(r_out, PID_ANGLE_OUT_LIMIT, -PID_ANGLE_OUT_LIMIT));
+                _pid_pitch_rate.setTarget(
+                    _pid_pitch_angle.calc(p_out, PID_ANGLE_OUT_LIMIT, -PID_ANGLE_OUT_LIMIT));
+            }
+
+            // 速率环直接用原始数据（不加滤波，延迟代价太大）
             float roll_out  = _pid_roll_rate.calc(_att.roll_rate,  PID_RATE_OUT_LIMIT, -PID_RATE_OUT_LIMIT);
             float pitch_out = _pid_pitch_rate.calc(_att.pitch_rate, PID_RATE_OUT_LIMIT, -PID_RATE_OUT_LIMIT);
             float yaw_out   = _pid_yaw_rate.calc(_att.yaw_rate,    PID_RATE_OUT_LIMIT, -PID_RATE_OUT_LIMIT);

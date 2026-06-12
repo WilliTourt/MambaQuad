@@ -1,6 +1,7 @@
 #include "LoraTask.h"
 #include "MagTask.h"
 #include "ControlTask.h"
+// #include "usbd_cdc_if.h"
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
@@ -159,7 +160,10 @@ void LoraTask::parseCommand(const char* cmd) {
         if (strcmp(axs, "R") == 0 || strcmp(axs, "ROLL") == 0) axis = 0;
         else if (strcmp(axs, "P") == 0 || strcmp(axs, "PITCH") == 0) axis = 1;
         else if (strcmp(axs, "Y") == 0 || strcmp(axs, "YAW") == 0) axis = 2;
-        else { _serial.send((uint8_t*)"ERR: axis must be R/P/Y\r\n", 25); return; }
+        else if (strcmp(axs, "AR") == 0 || strcmp(axs, "RA") == 0) axis = 3;
+        else if (strcmp(axs, "AP") == 0 || strcmp(axs, "PA") == 0) axis = 4;
+        else if (strcmp(axs, "AY") == 0 || strcmp(axs, "YA") == 0) axis = 5;
+        else { _serial.send((uint8_t*)"ERR: axis must be R/P/Y/AR/AP/AY\r\n", 35); return; }
 
         if (strcmp(gn, "P") == 0 || strcmp(gn, "KP") == 0) gain = 0;
         else if (strcmp(gn, "I") == 0 || strcmp(gn, "KI") == 0) gain = 1;
@@ -177,8 +181,10 @@ void LoraTask::parseCommand(const char* cmd) {
         ctrlData.timestamp_ms = xTaskGetTickCount();
         _ctrlQueue.sendToBack(ctrlData, 0);
 
-        snprintf(resp, sizeof(resp), "OK: PID %c%c = %.4f\r\n",
-            "RPY"[axis], "PID"[gain], val);
+        snprintf(resp, sizeof(resp), "OK: PID %c%c%c = %.4f\r\n",
+            axis < 3 ? "RPY"[axis] : "RPY"[axis-3],
+            axis < 3 ? ' ' : 'A',
+            "PID"[gain], val);
         _serial.send((uint8_t*)resp, strlen(resp));
 
     } else if (strcmp(tok, "AT") == 0) {
@@ -228,19 +234,23 @@ void LoraTask::parseCommand(const char* cmd) {
 
 void LoraTask::_sendTelemetry() {
     // CSV: roll_rate,pitch_rate,yaw_rate,m0,m1,m2,m3 (rate*10 deg/s, motor raw)
+    int x = (int)(RAD2DEG(_lastAtt.roll_rate)  * 10.0f);
+    int y = (int)(RAD2DEG(_lastAtt.pitch_rate) * 10.0f);
+    int z = (int)(RAD2DEG(_lastAtt.yaw_rate)   * 10.0f);
     int rx = (int)(RAD2DEG(_lastAtt.roll_rate)  * 10.0f);
     int ry = (int)(RAD2DEG(_lastAtt.pitch_rate) * 10.0f);
     int rz = (int)(RAD2DEG(_lastAtt.yaw_rate)   * 10.0f);
 
     char buf[64];
     int len = snprintf(buf, sizeof(buf),
-        "%d,%d,%d,%d,%d,%d,%d\r\n",
-        rx, ry, rz,
+        "%d,%d,%d,%d,%d,%d,%d,%d,%d,%d\r\n",
+        x, y, z, rx, ry, rz,
         ControlTask::motor_throttle[0], ControlTask::motor_throttle[1],
         ControlTask::motor_throttle[2], ControlTask::motor_throttle[3]);
 
     if (len > 0 && len < (int)sizeof(buf)) {
         _serial.send((uint8_t*)buf, len);
+        // CDC_Transmit_FS((uint8_t*)buf, len);
     }
 }
 

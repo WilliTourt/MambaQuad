@@ -32,6 +32,29 @@
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
 
+/* USB RX buffer for command processing (shared with DBGTask) */
+static char usb_rx_buf[256];
+static volatile int usb_rx_len = 0;
+static volatile int usb_rx_ready = 0;
+
+// Called from DBGTask to get received USB data
+#ifdef __cplusplus
+extern "C" {
+#endif
+int usb_rx_available(void) {
+    return usb_rx_ready;
+}
+int usb_rx_copy(char* dst, int maxlen) {
+    int len = usb_rx_len < maxlen ? usb_rx_len : maxlen;
+    for (int i = 0; i < len; i++) dst[i] = usb_rx_buf[i];
+    usb_rx_len = 0;
+    usb_rx_ready = 0;
+    return len;
+}
+#ifdef __cplusplus
+}
+#endif
+
 /* USER CODE END PV */
 
 /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
@@ -261,6 +284,12 @@ static int8_t CDC_Control_FS(uint8_t cmd, uint8_t* pbuf, uint16_t length)
 static int8_t CDC_Receive_FS(uint8_t* Buf, uint32_t *Len)
 {
   /* USER CODE BEGIN 6 */
+  // Store received data for DBGTask command processing
+  if (*Len > 0 && *Len < 256 && !usb_rx_ready) {
+    for (int i = 0; i < (int)*Len; i++) usb_rx_buf[i] = (char)Buf[i];
+    usb_rx_len = (int)*Len;
+    usb_rx_ready = 1;
+  }
   USBD_CDC_SetRxBuffer(&hUsbDeviceFS, &Buf[0]);
   USBD_CDC_ReceivePacket(&hUsbDeviceFS);
   return (USBD_OK);
